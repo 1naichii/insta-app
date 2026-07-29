@@ -15,6 +15,8 @@
 .env
 .env.backup
 .env.production
+.env.testing
+.env.e2e
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -27,3 +29,13 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+/storage/logs/*
+!/storage/logs/.gitignore
+
+/playwright-report/
+/test-results/
+/blob-report/
+/coverage/
+package-lock.json
+
