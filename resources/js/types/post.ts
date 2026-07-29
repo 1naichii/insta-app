@@ -13,6 +13,7 @@ export type Post = {
     likes_count: number;
     comments_count: number;
     user: PostAuthor;
+    can: { update: boolean; delete: boolean };
 };
 
 export type PaginationLink = {

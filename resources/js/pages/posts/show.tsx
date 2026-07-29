@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
+import PostActionsMenu from '@/components/post-actions-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
@@ -27,24 +28,28 @@ export default function PostsShow({ post }: Props) {
                 </Link>
 
                 <article className="overflow-hidden rounded-lg border border-border bg-card">
-                    <div className="flex items-center gap-3 p-4">
-                        <Avatar>
-                            <AvatarImage
-                                src={post.user.avatar ?? undefined}
-                                alt={post.user.username}
-                            />
-                            <AvatarFallback>
-                                {getInitials(post.user.name)}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="leading-tight">
-                            <p className="text-sm font-semibold">
-                                {post.user.username}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {post.user.name}
-                            </p>
+                    <div className="flex items-center justify-between gap-2 p-4">
+                        <div className="flex items-center gap-3">
+                            <Avatar>
+                                <AvatarImage
+                                    src={post.user.avatar ?? undefined}
+                                    alt={post.user.username}
+                                />
+                                <AvatarFallback>
+                                    {getInitials(post.user.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="leading-tight">
+                                <p className="text-sm font-semibold">
+                                    {post.user.username}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {post.user.name}
+                                </p>
+                            </div>
                         </div>
+
+                        <PostActionsMenu post={post} />
                     </div>
 
                     <div className="aspect-square w-full max-w-full overflow-hidden bg-muted">

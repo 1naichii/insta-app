@@ -160,3 +160,127 @@ test('a user can view a post detail page', function () {
         ->whereNot('post.image_url', '')
     );
 });
+
+test('owner can update a post', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create(['caption' => 'Old caption']);
+    $image = UploadedFile::fake()->image('new.jpg');
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'caption' => 'New caption',
+            'image' => $image,
+        ]);
+
+    $response->assertRedirect(route('posts.show', $post));
+
+    $post->refresh();
+    expect($post->caption)->toBe('New caption');
+    Storage::disk('public')->assertExists($post->image_path);
+});
+
+test('owner can update only the caption without re-uploading an image', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create(['caption' => 'Old caption']);
+    $originalImagePath = $post->image_path;
+    Storage::disk('public')->put($originalImagePath, 'fake-image-content');
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'caption' => 'New caption',
+        ]);
+
+    $response->assertRedirect(route('posts.show', $post));
+
+    $post->refresh();
+    expect($post->caption)->toBe('New caption');
+    expect($post->image_path)->toBe($originalImagePath);
+    Storage::disk('public')->assertExists($originalImagePath);
+});
+
+test('replacing the image deletes the previous file from disk', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create();
+    $originalImagePath = $post->image_path;
+    Storage::disk('public')->put($originalImagePath, 'fake-image-content');
+    $newImage = UploadedFile::fake()->image('new.jpg');
+
+    $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'image' => $newImage,
+        ]);
+
+    $post->refresh();
+    expect($post->image_path)->not->toBe($originalImagePath);
+    Storage::disk('public')->assertMissing($originalImagePath);
+    Storage::disk('public')->assertExists($post->image_path);
+});
+
+test('replacing only the image keeps the existing caption', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create(['caption' => 'Keep me']);
+
+    $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'image' => UploadedFile::fake()->image('new.jpg'),
+        ]);
+
+    expect($post->refresh()->caption)->toBe('Keep me');
+});
+
+test('submitting an empty caption clears it', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create(['caption' => 'Remove me']);
+
+    $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'caption' => '',
+        ]);
+
+    expect($post->refresh()->caption)->toBeNull();
+});
+
+test('owner can delete a post', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('posts.destroy', $post));
+
+    $response->assertRedirect(route('posts.index'));
+
+    expect(Post::find($post->id))->toBeNull();
+});
+
+test('deleting a post removes its image file from disk', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create();
+    $imagePath = $post->image_path;
+    Storage::disk('public')->put($imagePath, 'fake-image-content');
+
+    $this
+        ->actingAs($user)
+        ->delete(route('posts.destroy', $post));
+
+    Storage::disk('public')->assertMissing($imagePath);
+});

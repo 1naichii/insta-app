@@ -18,6 +18,7 @@ type Props = {
     onChange: (file: File | null) => void;
     error?: string;
     disabled?: boolean;
+    required?: boolean;
 };
 
 const ACCEPT_ATTRIBUTE = ACCEPTED_IMAGE_TYPES.join(',');
@@ -33,6 +34,7 @@ export default function ImageUpload({
     onChange,
     error,
     disabled = false,
+    required = true,
 }: Props) {
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
@@ -134,7 +136,7 @@ export default function ImageUpload({
                 name="image"
                 type="file"
                 accept={ACCEPT_ATTRIBUTE}
-                required
+                required={required}
                 disabled={disabled}
                 onChange={handleFileChange}
                 aria-invalid={Boolean(displayedError)}

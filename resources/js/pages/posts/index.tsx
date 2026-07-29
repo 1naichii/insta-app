@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
+import PostActionsMenu from '@/components/post-actions-menu';
 import PostCard from '@/components/post-card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -50,7 +51,11 @@ export default function PostsIndex({ posts }: Props) {
                 ) : (
                     <div className="space-y-6">
                         {posts.data.map((post) => (
-                            <PostCard key={post.id} post={post} />
+                            <PostCard
+                                key={post.id}
+                                post={post}
+                                actions={<PostActionsMenu post={post} />}
+                            />
                         ))}
                     </div>
                 )}
