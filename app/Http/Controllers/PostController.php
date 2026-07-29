@@ -19,10 +19,15 @@ class PostController extends Controller
      */
     public function index(): Response
     {
+        $userId = request()->user()?->id;
+
         $posts = Post::query()
             ->latest()
             ->with('user')
             ->withCount(['likes', 'comments'])
+            ->withExists([
+                'likes as liked_by_user' => fn ($query) => $query->where('user_id', $userId),
+            ])
             ->paginate(12)
             ->through(fn (Post $post) => $this->serialize($post));
 
@@ -69,7 +74,15 @@ class PostController extends Controller
      */
     public function show(Post $post): Response
     {
-        $post->load('user')->loadCount(['likes', 'comments']);
+        $userId = request()->user()?->id;
+
+        $post = Post::query()
+            ->with('user')
+            ->withCount(['likes', 'comments'])
+            ->withExists([
+                'likes as liked_by_user' => fn ($query) => $query->where('user_id', $userId),
+            ])
+            ->findOrFail($post->id);
 
         return Inertia::render('posts/show', [
             'post' => $this->serialize($post),
@@ -165,6 +178,7 @@ class PostController extends Controller
             'created_at' => $post->created_at->toIso8601String(),
             'likes_count' => $post->likes_count,
             'comments_count' => $post->comments_count,
+            'liked_by_user' => (bool) ($post->liked_by_user ?? false),
             'user' => [
                 'id' => $post->user->id,
                 'name' => $post->user->name,

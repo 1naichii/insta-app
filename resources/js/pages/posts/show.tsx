@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 import PostActionsMenu from '@/components/post-actions-menu';
+import PostLikeButton from '@/components/post-like-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
@@ -65,13 +66,7 @@ export default function PostsShow({ post }: Props) {
 
                     <div className="space-y-3 p-4">
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                                <Heart className="size-4" aria-hidden="true" />
-                                <span>
-                                    <span className="sr-only">Likes: </span>
-                                    {formatCount(post.likes_count)}
-                                </span>
-                            </span>
+                            <PostLikeButton post={post} />
                             <span className="flex items-center gap-1">
                                 <MessageCircle
                                     className="size-4"

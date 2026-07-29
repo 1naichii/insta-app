@@ -12,6 +12,7 @@ export type Post = {
     created_at: string; // ISO 8601
     likes_count: number;
     comments_count: number;
+    liked_by_user: boolean;
     user: PostAuthor;
     can: { update: boolean; delete: boolean };
 };

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import PostActionsMenu from '@/components/post-actions-menu';
 import PostCard from '@/components/post-card';
+import PostLikeButton from '@/components/post-like-button';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { create, index } from '@/routes/posts';
@@ -55,6 +56,7 @@ export default function PostsIndex({ posts }: Props) {
                                 key={post.id}
                                 post={post}
                                 actions={<PostActionsMenu post={post} />}
+                                likeButton={<PostLikeButton post={post} />}
                             />
                         ))}
                     </div>

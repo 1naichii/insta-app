@@ -11,10 +11,16 @@ import type { Post } from '@/types';
 type Props = {
     post: Post;
     actions?: ReactNode;
+    likeButton?: ReactNode;
     className?: string;
 };
 
-export default function PostCard({ post, actions, className }: Props) {
+export default function PostCard({
+    post,
+    actions,
+    likeButton,
+    className,
+}: Props) {
     const getInitials = useInitials();
 
     return (
@@ -54,9 +60,11 @@ export default function PostCard({ post, actions, className }: Props) {
                         className="size-full object-cover"
                     />
                 </div>
+            </Link>
 
-                <div className="space-y-2 p-3">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="space-y-2 p-3">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {likeButton ?? (
                         <span className="flex items-center gap-1">
                             <Heart className="size-4" aria-hidden="true" />
                             <span>
@@ -64,18 +72,17 @@ export default function PostCard({ post, actions, className }: Props) {
                                 {formatCount(post.likes_count)}
                             </span>
                         </span>
-                        <span className="flex items-center gap-1">
-                            <MessageCircle
-                                className="size-4"
-                                aria-hidden="true"
-                            />
-                            <span>
-                                <span className="sr-only">Comments: </span>
-                                {formatCount(post.comments_count)}
-                            </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                        <MessageCircle className="size-4" aria-hidden="true" />
+                        <span>
+                            <span className="sr-only">Comments: </span>
+                            {formatCount(post.comments_count)}
                         </span>
-                    </div>
+                    </span>
+                </div>
 
+                <Link href={show(post.id)} className="block space-y-2">
                     {post.caption && (
                         <p className="text-sm text-foreground">
                             <span className="font-medium">
@@ -91,8 +98,8 @@ export default function PostCard({ post, actions, className }: Props) {
                     >
                         {formatPostDate(post.created_at)}
                     </time>
-                </div>
-            </Link>
+                </Link>
+            </div>
         </article>
     );
 }
