@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
+use App\Models\Comment;
 use App\Models\Post;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +78,10 @@ class PostController extends Controller
         $userId = request()->user()?->id;
 
         $post = Post::query()
-            ->with('user')
+            ->with([
+                'user',
+                'comments' => fn ($query) => $query->oldest()->with('user'),
+            ])
             ->withCount(['likes', 'comments'])
             ->withExists([
                 'likes as liked_by_user' => fn ($query) => $query->where('user_id', $userId),
@@ -86,6 +90,7 @@ class PostController extends Controller
 
         return Inertia::render('posts/show', [
             'post' => $this->serialize($post),
+            'comments' => $post->comments->map(fn (Comment $comment) => $this->serializeComment($comment)),
         ]);
     }
 
@@ -188,6 +193,29 @@ class PostController extends Controller
             'can' => [
                 'update' => $user?->can('update', $post) ?? false,
                 'delete' => $user?->can('delete', $post) ?? false,
+            ],
+        ];
+    }
+
+    /**
+     * Serialize a comment for the Inertia response.
+     *
+     * @return array<string, mixed>
+     */
+    private function serializeComment(Comment $comment): array
+    {
+        return [
+            'id' => $comment->id,
+            'body' => $comment->body,
+            'created_at' => $comment->created_at->toIso8601String(),
+            'user' => [
+                'id' => $comment->user->id,
+                'name' => $comment->user->name,
+                'username' => $comment->user->username,
+                'avatar' => $comment->user->avatar,
+            ],
+            'can' => [
+                'delete' => request()->user()?->can('delete', $comment) ?? false,
             ],
         ];
     }

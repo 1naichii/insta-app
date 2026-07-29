@@ -1,18 +1,21 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
+import CommentForm from '@/components/comment-form';
+import CommentList from '@/components/comment-list';
 import PostActionsMenu from '@/components/post-actions-menu';
 import PostLikeButton from '@/components/post-like-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
 import { index } from '@/routes/posts';
-import type { Post } from '@/types';
+import type { Comment, Post } from '@/types';
 
 type Props = {
     post: Post;
+    comments: Comment[];
 };
 
-export default function PostsShow({ post }: Props) {
+export default function PostsShow({ post, comments }: Props) {
     const getInitials = useInitials();
 
     return (
@@ -99,14 +102,13 @@ export default function PostsShow({ post }: Props) {
 
                 <section
                     aria-label="Comments"
-                    className="space-y-3 rounded-lg border border-dashed border-border p-4"
+                    className="space-y-4 rounded-lg border border-border bg-card p-4"
                 >
-                    <h2 className="text-sm font-medium text-muted-foreground">
-                        Comments
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                        Comments are coming soon.
-                    </p>
+                    <h2 className="text-sm font-semibold">Comments</h2>
+                    <CommentList comments={comments} />
+                    <div className="border-t border-border pt-4">
+                        <CommentForm postId={post.id} />
+                    </div>
                 </section>
             </div>
         </>

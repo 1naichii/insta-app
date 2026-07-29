@@ -5,6 +5,14 @@ export type PostAuthor = {
     avatar: string | null;
 };
 
+export type Comment = {
+    id: number;
+    body: string;
+    created_at: string; // ISO 8601
+    user: PostAuthor;
+    can: { delete: boolean };
+};
+
 export type Post = {
     id: number;
     caption: string | null;
