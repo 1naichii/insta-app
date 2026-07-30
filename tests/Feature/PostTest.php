@@ -259,19 +259,24 @@ test('owner can update a post', function () {
 
     $user = User::factory()->create();
     $post = Post::factory()->for($user)->create(['caption' => 'Old caption']);
+    $originalImagePath = $post->image_path;
+    Storage::disk('public')->put($originalImagePath, 'fake-image-content');
     $image = UploadedFile::fake()->image('new.jpg');
 
-    $response = $this
-        ->actingAs($user)
-        ->patch(route('posts.update', $post), [
-            'caption' => 'New caption',
-            'image' => $image,
-        ]);
+    $this->actingAs($user)->get(route('profile.show', $user))->assertOk();
+    $this->get(route('posts.edit', $post))->assertOk();
 
-    $response->assertRedirect(route('posts.index'));
+    $response = $this->patch(route('posts.update', $post), [
+        'caption' => 'New caption',
+        'image' => $image,
+    ]);
+
+    $response->assertRedirect(route('profile.show', $user));
 
     $post->refresh();
     expect($post->caption)->toBe('New caption');
+    expect($post->image_path)->not->toBe($originalImagePath);
+    Storage::disk('public')->assertMissing($originalImagePath);
     Storage::disk('public')->assertExists($post->image_path);
 });
 
@@ -315,13 +320,14 @@ test('owner can update only the caption without re-uploading an image', function
     $originalImagePath = $post->image_path;
     Storage::disk('public')->put($originalImagePath, 'fake-image-content');
 
-    $response = $this
-        ->actingAs($user)
-        ->patch(route('posts.update', $post), [
-            'caption' => 'New caption',
-        ]);
+    $this->actingAs($user)->get(route('profile.show', $user))->assertOk();
+    $this->get(route('posts.edit', $post))->assertOk();
 
-    $response->assertRedirect(route('posts.index'));
+    $response = $this->patch(route('posts.update', $post), [
+        'caption' => 'New caption',
+    ]);
+
+    $response->assertRedirect(route('profile.show', $user));
 
     $post->refresh();
     expect($post->caption)->toBe('New caption');

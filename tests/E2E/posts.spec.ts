@@ -1,13 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-import {
-    createPost,
-    login,
-    openPostModal,
-    postArticle,
-    uniqueValue,
-} from './helpers';
+import { createPost, login, openPostModal, uniqueValue } from './helpers';
 
 test('a user can create a post with an image', async ({ page }) => {
     await login(page);
@@ -175,22 +169,27 @@ test('the post modal closes without a close button', async ({ page }) => {
     await expect(dialog).not.toBeVisible();
 });
 
-test('a user can edit their own post', async ({ page }) => {
+test('editing a post from a profile returns to that profile', async ({
+    page,
+}) => {
     await login(page);
     const caption = uniqueValue('before-edit');
     const postId = await createPost(page, caption);
     const updatedCaption = uniqueValue('after-edit');
+    await page.goto('/@demo');
 
-    await postArticle(page, caption)
-        .getByRole('button', { name: 'Post options' })
+    await page
+        .getByRole('button')
+        .filter({ has: page.getByRole('img', { name: caption }) })
         .click();
+    await page.getByRole('button', { name: 'Post options' }).click();
     await page.getByRole('menuitem', { name: 'Edit post' }).click();
     await expect(page).toHaveURL(`/posts/${postId}/edit`);
     await page.getByLabel('Caption').fill(updatedCaption);
     await page.getByRole('button', { name: 'Save changes' }).click();
 
-    await expect(page).toHaveURL(/\/feed$/);
-    await expect(page.getByText(updatedCaption)).toBeVisible();
+    await expect(page).toHaveURL(/\/@demo$/);
+    await expect(page.getByRole('img', { name: updatedCaption })).toBeVisible();
 });
 
 test('a user can delete their own post', async ({ page }) => {

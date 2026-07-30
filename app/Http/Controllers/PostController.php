@@ -81,6 +81,16 @@ class PostController extends Controller
     {
         Gate::authorize('update', $post);
 
+        $session = request()->session();
+        $returnUrl = route('posts.index');
+        $previousUrl = url()->previous();
+
+        if (str_starts_with($previousUrl, url('/').'/')) {
+            $returnUrl = $previousUrl;
+        }
+
+        $session->put("posts.edit.return_url.{$post->getKey()}", $returnUrl);
+
         return Inertia::render('posts/edit', [
             'post' => PostSerializer::post($post),
         ]);
@@ -130,7 +140,13 @@ class PostController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Post updated.')]);
 
-        return to_route('posts.index');
+        /** @var string $returnUrl */
+        $returnUrl = $request->session()->pull(
+            "posts.edit.return_url.{$post->getKey()}",
+            route('posts.index'),
+        );
+
+        return redirect($returnUrl);
     }
 
     /**
