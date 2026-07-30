@@ -44,6 +44,30 @@ test('a user can log out', async ({ page }) => {
     await expect(page).toHaveURL(/\/login$/);
 });
 
+test('the mobile account icon is centred in its dock cell', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 414, height: 896 });
+    await login(page);
+
+    const trigger = page.getByRole('button', {
+        name: 'Demo User',
+        exact: true,
+    });
+    const geometry = await trigger.evaluate((button) => {
+        const cellBounds = button.parentElement!.getBoundingClientRect();
+        const iconBounds = button.querySelector('svg')!.getBoundingClientRect();
+
+        return {
+            cellCenter: cellBounds.x + cellBounds.width / 2,
+            iconCenter: iconBounds.x + iconBounds.width / 2,
+        };
+    });
+
+    expect(geometry.cellCenter).toBeCloseTo(362.25, 2);
+    expect(geometry.iconCenter).toBeCloseTo(362.25, 2);
+});
+
 test('the desktop navigation rail stays expanded with its account menu open', async ({
     page,
 }) => {

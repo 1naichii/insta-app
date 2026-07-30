@@ -57,7 +57,10 @@ export function AppAccountMenu({
         <button
             type="button"
             data-test="app-account-menu-trigger"
-            className="flex w-full items-center gap-3 rounded-md p-2.5 text-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-sidebar-accent"
+            className={cn(
+                'flex w-full items-center gap-3 rounded-md p-2.5 text-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-sidebar-accent',
+                !showLabel && 'justify-center',
+            )}
         >
             <Menu className="size-6 shrink-0" aria-hidden="true" />
             <span
