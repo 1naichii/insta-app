@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { show, update } from '@/routes/posts';
+import { index, update } from '@/routes/posts';
 import type { Post } from '@/types';
 
 const MAX_CAPTION_LENGTH = 2200;
@@ -100,7 +100,7 @@ export default function EditPost({ post }: Props) {
                                 </Button>
 
                                 <Link
-                                    href={show(post.id)}
+                                    href={index()}
                                     className="text-sm text-muted-foreground hover:text-foreground"
                                 >
                                     Cancel

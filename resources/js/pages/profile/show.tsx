@@ -1,12 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import { Heart, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
+import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { index, show as showPost } from '@/routes/posts';
+import { index } from '@/routes/posts';
 import { edit as editProfile } from '@/routes/profile';
 import type { Paginated, Post, Profile } from '@/types';
 
@@ -24,6 +26,8 @@ function decodeHtmlEntities(label: string): string {
 
 export default function ProfileShow({ profile, posts }: Props) {
     const getInitials = useInitials();
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
 
     return (
         <>
@@ -111,10 +115,14 @@ export default function ProfileShow({ profile, posts }: Props) {
                 ) : (
                     <div className="grid grid-cols-3 gap-1 sm:gap-2">
                         {posts.data.map((post) => (
-                            <Link
+                            <button
                                 key={post.id}
-                                href={showPost(post.id)}
-                                className="group relative aspect-square w-full max-w-full overflow-hidden bg-muted"
+                                type="button"
+                                onClick={() => {
+                                    setSelectedPost(post);
+                                    setModalOpen(true);
+                                }}
+                                className="group relative aspect-square w-full max-w-full cursor-pointer overflow-hidden bg-muted"
                             >
                                 <img
                                     src={post.image_url}
@@ -140,7 +148,7 @@ export default function ProfileShow({ profile, posts }: Props) {
                                         {formatCount(post.comments_count)}
                                     </span>
                                 </div>
-                            </Link>
+                            </button>
                         ))}
                     </div>
                 )}
@@ -178,6 +186,14 @@ export default function ProfileShow({ profile, posts }: Props) {
                     </nav>
                 )}
             </div>
+
+            {selectedPost && (
+                <PostModal
+                    post={selectedPost}
+                    open={modalOpen}
+                    onOpenChange={setModalOpen}
+                />
+            )}
         </>
     );
 }

@@ -86,4 +86,42 @@ describe('CommentList', () => {
         act(() => options.onFinish());
         expect(button).toBeEnabled();
     });
+
+    it('calls onDeleted when a comment is successfully deleted', async () => {
+        const user = userEvent.setup();
+        const onDeleted = vi.fn();
+        render(<CommentList comments={[comment]} onDeleted={onDeleted} />);
+        const button = screen.getByRole('button', {
+            name: /delete comment by ada/i,
+        });
+
+        await user.click(button);
+
+        const options = routerMock.delete.mock.calls[0][1] as {
+            onSuccess: () => void;
+            onFinish: () => void;
+        };
+
+        expect(onDeleted).not.toHaveBeenCalled();
+
+        act(() => options.onSuccess());
+
+        expect(onDeleted).toHaveBeenCalledOnce();
+    });
+
+    it('does not require onDeleted to be provided', async () => {
+        const user = userEvent.setup();
+        render(<CommentList comments={[comment]} />);
+        const button = screen.getByRole('button', {
+            name: /delete comment by ada/i,
+        });
+
+        await user.click(button);
+
+        const options = routerMock.delete.mock.calls[0][1] as {
+            onSuccess: () => void;
+        };
+
+        expect(() => act(() => options.onSuccess())).not.toThrow();
+    });
 });

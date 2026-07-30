@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
-use App\Models\Comment;
 use App\Models\Post;
 use App\Support\PostSerializer;
 use Illuminate\Http\RedirectResponse;
@@ -72,30 +71,6 @@ class PostController extends Controller
     }
 
     /**
-     * Display the specified post.
-     */
-    public function show(Post $post): Response
-    {
-        $userId = request()->user()?->id;
-
-        $post = Post::query()
-            ->with([
-                'user',
-                'comments' => fn ($query) => $query->oldest()->with('user'),
-            ])
-            ->withCount(['likes', 'comments'])
-            ->withExists([
-                'likes as liked_by_user' => fn ($query) => $query->where('user_id', $userId),
-            ])
-            ->findOrFail($post->id);
-
-        return Inertia::render('posts/show', [
-            'post' => PostSerializer::post($post),
-            'comments' => $post->comments->map(fn (Comment $comment) => PostSerializer::comment($comment)),
-        ]);
-    }
-
-    /**
      * Show the form for editing the specified post.
      */
     public function edit(Post $post): Response
@@ -145,7 +120,7 @@ class PostController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Post updated.')]);
 
-        return to_route('posts.show', $post);
+        return to_route('posts.index');
     }
 
     /**

@@ -130,7 +130,7 @@ class AuthenticationTest extends TestCase
         return [
             'feed' => ['posts.index', null],
             'create post' => ['posts.create', null],
-            'post detail' => ['posts.show', 'post'],
+            'post comments' => ['posts.comments.index', 'post'],
             'profile settings' => ['profile.edit', null],
             'public profile' => ['profile.show', 'user'],
         ];

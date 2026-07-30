@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { demoUser, login, uniqueValue } from './helpers';
+import { login, uniqueValue } from './helpers';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -31,7 +31,14 @@ test('a user can log in', async ({ page }) => {
 
 test('a user can log out', async ({ page }) => {
     await login(page);
-    await page.getByRole('button', { name: demoUser.username }).click();
+
+    // Not a substring match on `demoUser.username` ("demo"): the feed can
+    // (and, once posts exist, does) contain post captions that start with
+    // the demo user's own username, which now render as buttons that open
+    // the post modal, so an inexact name would also match those. `exact`
+    // keeps this matching only the account menu trigger, which is labelled
+    // with the display name "Demo User".
+    await page.getByRole('button', { name: 'Demo User', exact: true }).click();
     await page.getByText('Log out', { exact: true }).click();
 
     await expect(page).toHaveURL(/\/login$/);

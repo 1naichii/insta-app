@@ -1,11 +1,12 @@
 import { Link } from '@inertiajs/react';
 import { Heart, MessageCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
+import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { show } from '@/routes/posts';
 import { show as showProfile } from '@/routes/profile';
 import type { Post } from '@/types';
 
@@ -23,6 +24,7 @@ export default function PostCard({
     className,
 }: Props) {
     const getInitials = useInitials();
+    const [modalOpen, setModalOpen] = useState(false);
 
     return (
         <article className={cn('border-b border-border pb-3', className)}>
@@ -62,7 +64,11 @@ export default function PostCard({
                 {actions}
             </header>
 
-            <Link href={show(post.id)} className="block">
+            <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="block w-full cursor-pointer text-left"
+            >
                 <div className="aspect-square w-full max-w-full overflow-hidden bg-muted">
                     <img
                         src={post.image_url}
@@ -73,7 +79,7 @@ export default function PostCard({
                         className="size-full object-cover"
                     />
                 </div>
-            </Link>
+            </button>
 
             <div className="px-3 pt-2">
                 <div className="-ml-2 flex items-center gap-2">
@@ -87,17 +93,21 @@ export default function PostCard({
                             <span className="sr-only">Like post</span>
                         </span>
                     )}
-                    <span className="inline-flex items-center gap-1.5 rounded-full p-2 text-foreground">
+                    <button
+                        type="button"
+                        onClick={() => setModalOpen(true)}
+                        aria-label="View comments"
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full p-2 text-foreground"
+                    >
                         <MessageCircle
                             className="size-6"
                             strokeWidth={1.5}
                             aria-hidden="true"
                         />
                         <span className="text-sm">
-                            <span className="sr-only">Comments: </span>
                             {formatCount(post.comments_count)}
                         </span>
-                    </span>
+                    </button>
                 </div>
 
                 {!likeButton && (
@@ -107,17 +117,24 @@ export default function PostCard({
                 )}
 
                 {post.caption && (
-                    <Link
-                        href={show(post.id)}
-                        className="mt-1 block text-sm text-foreground"
+                    <button
+                        type="button"
+                        onClick={() => setModalOpen(true)}
+                        className="mt-1 block w-full cursor-pointer text-left text-sm text-foreground"
                     >
                         <span className="font-medium">
                             {post.user.username}
                         </span>{' '}
                         {post.caption}
-                    </Link>
+                    </button>
                 )}
             </div>
+
+            <PostModal
+                post={post}
+                open={modalOpen}
+                onOpenChange={setModalOpen}
+            />
         </article>
     );
 }

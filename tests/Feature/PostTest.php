@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Database\Events\QueryExecuted;
@@ -174,22 +175,25 @@ test('the feed lists posts newest first', function () {
     );
 });
 
-test('a user can view a post detail page', function () {
+test('an authenticated user can fetch a post\'s comments over the JSON endpoint', function () {
     $user = User::factory()->create();
     $post = Post::factory()->for($user)->create();
+    $comment = Comment::factory()->for($post)->for($user)->create();
 
-    $response = $this->actingAs($user)->get(route('posts.show', $post));
+    $response = $this->actingAs($user)->get(route('posts.comments.index', $post));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
-        ->component('posts/show')
-        ->where('post.id', $post->id)
-        ->where('post.user.id', $user->id)
-        ->where('post.user.username', $user->username)
-        ->where('post.likes_count', 0)
-        ->where('post.comments_count', 0)
-        ->whereNot('post.image_url', '')
-    );
+    $response->assertJsonPath('comments.0.id', $comment->id);
+    $response->assertJsonPath('comments.0.body', $comment->body);
+    $response->assertJsonPath('comments.0.user.id', $user->id);
+});
+
+test('guest is redirected to login from the comments endpoint', function () {
+    $post = Post::factory()->create();
+
+    $response = $this->get(route('posts.comments.index', $post));
+
+    $response->assertRedirect(route('login'));
 });
 
 test('owner can update a post', function () {
@@ -206,7 +210,7 @@ test('owner can update a post', function () {
             'image' => $image,
         ]);
 
-    $response->assertRedirect(route('posts.show', $post));
+    $response->assertRedirect(route('posts.index'));
 
     $post->refresh();
     expect($post->caption)->toBe('New caption');
@@ -259,7 +263,7 @@ test('owner can update only the caption without re-uploading an image', function
             'caption' => 'New caption',
         ]);
 
-    $response->assertRedirect(route('posts.show', $post));
+    $response->assertRedirect(route('posts.index'));
 
     $post->refresh();
     expect($post->caption)->toBe('New caption');

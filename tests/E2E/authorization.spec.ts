@@ -4,6 +4,7 @@ import {
     demoUser,
     directDelete,
     login,
+    openPostModal,
     sarahUser,
     switchUser,
     uniqueValue,
@@ -11,10 +12,11 @@ import {
 
 test("User B cannot edit User A's post", async ({ page }) => {
     await login(page);
-    const postId = await createPost(page, uniqueValue('protected-edit'));
+    const caption = uniqueValue('protected-edit');
+    const postId = await createPost(page, caption);
     await switchUser(page, sarahUser.email);
 
-    await page.goto(`/posts/${postId}`);
+    await openPostModal(page, caption);
     await expect(
         page.getByRole('button', { name: 'Post options' }),
     ).toHaveCount(0);
@@ -25,10 +27,11 @@ test("User B cannot edit User A's post", async ({ page }) => {
 
 test("User B cannot delete User A's post", async ({ page }) => {
     await login(page);
-    const postId = await createPost(page, uniqueValue('protected-delete'));
+    const caption = uniqueValue('protected-delete');
+    const postId = await createPost(page, caption);
     await switchUser(page, sarahUser.email);
 
-    await page.goto(`/posts/${postId}`);
+    await openPostModal(page, caption);
     await expect(
         page.getByRole('button', { name: 'Post options' }),
     ).toHaveCount(0);
@@ -37,10 +40,9 @@ test("User B cannot delete User A's post", async ({ page }) => {
 
 test("User B cannot delete User A's comment", async ({ page }) => {
     await login(page);
-    const postId = await createPost(
-        page,
-        uniqueValue('protected-comment-post'),
-    );
+    const caption = uniqueValue('protected-comment-post');
+    await createPost(page, caption);
+    await openPostModal(page, caption);
     const body = uniqueValue('protected-comment');
     await page.getByLabel('Add a comment').fill(body);
     await page.getByRole('button', { name: 'Post comment' }).click();
@@ -59,7 +61,7 @@ test("User B cannot delete User A's comment", async ({ page }) => {
     await page.unroute('**/comments/*');
 
     await switchUser(page, sarahUser.email);
-    await page.goto(`/posts/${postId}`);
+    await openPostModal(page, caption);
     await expect(page.getByText(body)).toBeVisible();
     await expect(
         page.getByRole('button', {

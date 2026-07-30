@@ -44,6 +44,16 @@ export async function switchUser(page: Page, email: string) {
     await expect(page).toHaveURL(/\/feed$/);
 }
 
+export function postArticle(page: Page, caption: string) {
+    return page.getByRole('article').filter({ hasText: caption });
+}
+
+export async function openPostModal(page: Page, caption: string) {
+    await postArticle(page, caption)
+        .getByRole('button', { name: 'View comments' })
+        .click();
+}
+
 export async function createPost(page: Page, caption: string) {
     await page.goto('/posts/create');
     await page
@@ -54,12 +64,22 @@ export async function createPost(page: Page, caption: string) {
     await page.getByLabel('Caption').fill(caption);
     await page.getByRole('button', { name: 'Share' }).click();
     await expect(page).toHaveURL(/\/feed$/);
-    const post = page.getByRole('article').filter({ hasText: caption });
-    await expect(post).toBeVisible();
-    await post.getByRole('link').nth(1).click();
-    await expect(page).toHaveURL(/\/posts\/\d+$/);
 
-    return Number(new URL(page.url()).pathname.split('/').pop());
+    const post = postArticle(page, caption);
+    await expect(post).toBeVisible();
+
+    // There is no post detail page to visit for its id anymore, so open the
+    // edit page just long enough to read the id out of its URL, then return
+    // to the feed where the rest of the flow (likes, comments, the modal)
+    // actually happens.
+    await post.getByRole('button', { name: 'Post options' }).click();
+    await page.getByRole('menuitem', { name: 'Edit post' }).click();
+    await expect(page).toHaveURL(/\/posts\/\d+\/edit$/);
+    const postId = Number(new URL(page.url()).pathname.split('/')[2]);
+
+    await page.goto('/feed');
+
+    return postId;
 }
 
 export async function directDelete(page: Page, path: string) {

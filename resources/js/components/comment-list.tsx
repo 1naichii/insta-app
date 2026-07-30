@@ -11,9 +11,10 @@ import type { Comment } from '@/types';
 
 type Props = {
     comments: Comment[];
+    onDeleted?: () => void;
 };
 
-export default function CommentList({ comments }: Props) {
+export default function CommentList({ comments, onDeleted }: Props) {
     const [pendingCommentIds, setPendingCommentIds] = useState<Set<number>>(
         new Set(),
     );
@@ -23,6 +24,7 @@ export default function CommentList({ comments }: Props) {
 
         router.delete(destroy(comment.id), {
             preserveScroll: true,
+            onSuccess: () => onDeleted?.(),
             onFinish: () => {
                 setPendingCommentIds((current) => {
                     const next = new Set(current);

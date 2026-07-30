@@ -79,24 +79,9 @@ test('the can flags are true for the owner and false for another user', function
     $otherUser = User::factory()->create();
     $post = Post::factory()->for($owner)->create();
 
-    $this
-        ->actingAs($owner)
-        ->get(route('posts.show', $post))
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('posts/show')
-            ->where('post.can.update', true)
-            ->where('post.can.delete', true)
-        );
-
-    $this
-        ->actingAs($otherUser)
-        ->get(route('posts.show', $post))
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('posts/show')
-            ->where('post.can.update', false)
-            ->where('post.can.delete', false)
-        );
-
+    // The feed lists every post regardless of author, so it proves the can
+    // flags reflect the viewer's relationship to the post for both the owner
+    // and another user without relying on the removed post detail page.
     $this
         ->actingAs($owner)
         ->get(route('posts.index'))
@@ -104,5 +89,14 @@ test('the can flags are true for the owner and false for another user', function
             ->component('posts/index')
             ->where('posts.data.0.can.update', true)
             ->where('posts.data.0.can.delete', true)
+        );
+
+    $this
+        ->actingAs($otherUser)
+        ->get(route('posts.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('posts/index')
+            ->where('posts.data.0.can.update', false)
+            ->where('posts.data.0.can.delete', false)
         );
 });

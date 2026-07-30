@@ -11,9 +11,10 @@ const MAX_COMMENT_LENGTH = 500;
 
 type Props = {
     postId: number;
+    onCreated?: () => void;
 };
 
-export default function CommentForm({ postId }: Props) {
+export default function CommentForm({ postId, onCreated }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         body: '',
     });
@@ -27,7 +28,10 @@ export default function CommentForm({ postId }: Props) {
 
         post(store.url(postId), {
             preserveScroll: true,
-            onSuccess: () => reset('body'),
+            onSuccess: () => {
+                reset('body');
+                onCreated?.();
+            },
         });
     }
 

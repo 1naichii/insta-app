@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import PostCard from '@/components/post-card';
 import type { Post } from '@/types';
@@ -10,6 +11,15 @@ vi.mock('@inertiajs/react', () => ({
     }: ComponentProps<'a'> & { children: ReactNode }) => (
         <a {...props}>{children}</a>
     ),
+}));
+
+// PostModal itself fetches comments and picks Dialog/Sheet via
+// `useIsMobile()` (backed by `window.matchMedia`), none of which this test
+// cares about - it only needs to prove PostCard opens the modal, so the
+// modal is replaced with a minimal stand-in that reveals its `open` prop.
+vi.mock('@/components/post-modal', () => ({
+    default: ({ open }: { open: boolean }) =>
+        open ? <div data-testid="post-modal">Post modal</div> : null,
 }));
 
 const post: Post = {
@@ -59,5 +69,16 @@ describe('PostCard', () => {
             screen.getByRole('button', { name: /custom likes/i }),
         ).toBeInTheDocument();
         expect(screen.queryByText('1.5K likes')).not.toBeInTheDocument();
+    });
+
+    it('opens the post modal when the comment control is activated', async () => {
+        const user = userEvent.setup();
+        render(<PostCard post={post} />);
+
+        expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'View comments' }));
+
+        expect(screen.getByTestId('post-modal')).toBeInTheDocument();
     });
 });
