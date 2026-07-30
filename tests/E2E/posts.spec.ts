@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { createPost, login, postArticle, uniqueValue } from './helpers';
+import {
+    createPost,
+    login,
+    openPostModal,
+    postArticle,
+    uniqueValue,
+} from './helpers';
 
 test('a user can create a post with an image', async ({ page }) => {
     await login(page);
@@ -18,6 +24,26 @@ test('the post appears in the feed', async ({ page }) => {
     await page.goto('/feed');
 
     await expect(page.getByText(caption)).toBeVisible();
+});
+
+test('the post modal closes without a close button', async ({ page }) => {
+    await login(page);
+    const caption = uniqueValue('dismiss-post-modal');
+    await createPost(page, caption);
+    await openPostModal(page, caption);
+    const dialog = page.getByRole('dialog');
+
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Close' })).toHaveCount(0);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+
+    await openPostModal(page, caption);
+    await page
+        .locator('[data-slot="dialog-overlay"]')
+        .click({ position: { x: 5, y: 5 } });
+    await expect(dialog).not.toBeVisible();
 });
 
 test('a user can edit their own post', async ({ page }) => {

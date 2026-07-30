@@ -283,7 +283,11 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
     if (isMobile) {
         return (
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent side="bottom" className="h-[85vh] gap-0 p-0">
+                <SheetContent
+                    side="bottom"
+                    showCloseButton={false}
+                    className="h-[85vh] gap-0 p-0"
+                >
                     <SheetDescription className="sr-only">
                         View and add comments on {post.user.username}'s post.
                     </SheetDescription>
@@ -329,7 +333,10 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex h-[85vh] max-w-5xl gap-0 overflow-hidden p-0 sm:max-w-5xl">
+            <DialogContent
+                showCloseButton={false}
+                className="flex h-[85vh] max-w-5xl gap-0 overflow-hidden p-0 sm:max-w-5xl"
+            >
                 <DialogTitle className="sr-only">
                     {`${post.user.username}'s post`}
                 </DialogTitle>
