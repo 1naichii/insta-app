@@ -361,14 +361,17 @@ test('owner can delete a post', function () {
 
     $user = User::factory()->create();
     $post = Post::factory()->for($user)->create();
+    Storage::disk('public')->put($post->image_path, 'fake-image-content');
 
     $response = $this
         ->actingAs($user)
+        ->from(route('profile.show', $user))
         ->delete(route('posts.destroy', $post));
 
-    $response->assertRedirect(route('posts.index'));
+    $response->assertRedirectBack();
 
     expect(Post::find($post->id))->toBeNull();
+    Storage::disk('public')->assertMissing($post->image_path);
 });
 
 test('deleting a post removes its image file from disk', function () {

@@ -150,6 +150,6 @@ class PostController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Post deleted.')]);
 
-        return to_route('posts.index');
+        return back();
     }
 }

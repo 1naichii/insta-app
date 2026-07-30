@@ -68,16 +68,26 @@ test('a user can delete their own post', async ({ page }) => {
     await login(page);
     const caption = uniqueValue('delete-post');
     await createPost(page, caption);
+    await page.goto('/@demo');
 
-    await postArticle(page, caption)
-        .getByRole('button', { name: 'Post options' })
+    await page
+        .getByRole('button')
+        .filter({ has: page.getByRole('img', { name: caption }) })
         .click();
+    await page.getByRole('button', { name: 'Post options' }).click();
     await page.getByRole('menuitem', { name: 'Delete post' }).click();
     await expect(
         page.getByRole('dialog', { name: 'Delete this post?' }),
     ).toBeVisible();
+    const deleteResponse = page.waitForResponse(
+        (response) =>
+            response.request().method() === 'DELETE' &&
+            /\/posts\/\d+$/.test(new URL(response.url()).pathname),
+    );
     await page.getByRole('button', { name: 'Confirm delete' }).click();
+    await deleteResponse;
 
-    await expect(page).toHaveURL(/\/feed$/);
-    await expect(page.getByText(caption)).toHaveCount(0);
+    await expect(page.getByText('Post deleted.')).toBeVisible();
+    await expect(page).toHaveURL(/\/@demo$/);
+    await expect(page.getByRole('img', { name: caption })).toHaveCount(0);
 });
