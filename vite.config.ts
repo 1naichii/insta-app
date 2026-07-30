@@ -65,8 +65,6 @@ export default defineConfig({
                 'resources/js/layouts/**',
                 'resources/js/pages/auth/**',
                 'resources/js/pages/settings/**',
-                'resources/js/pages/dashboard.tsx',
-                'resources/js/pages/welcome.tsx',
                 'resources/js/components/app-*.tsx',
                 'resources/js/components/nav-*.tsx',
                 'resources/js/components/user-*.tsx',
