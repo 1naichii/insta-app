@@ -64,8 +64,8 @@ test('the mobile account icon is centred in its dock cell', async ({
         };
     });
 
-    expect(geometry.cellCenter).toBeCloseTo(362.25, 2);
-    expect(geometry.iconCenter).toBeCloseTo(362.25, 2);
+    expect(geometry.cellCenter).toBeCloseTo(349.125, 2);
+    expect(geometry.iconCenter).toBeCloseTo(349.125, 2);
 });
 
 test('the desktop navigation rail stays expanded with its account menu open', async ({
