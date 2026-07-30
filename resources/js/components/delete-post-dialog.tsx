@@ -52,6 +52,7 @@ export default function DeletePostDialog({
                         variant="destructive"
                         disabled={processing}
                         onClick={onConfirm}
+                        aria-label="Confirm delete"
                     >
                         {processing && <Spinner />}
                         Confirm delete
