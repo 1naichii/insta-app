@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import PostCard from '@/components/post-card';
 import type { Post } from '@/types';
+
+const viewport = vi.hoisted(() => ({ isMobile: false }));
+const likeMock = vi.hoisted(() => ({ liked: false, toggle: vi.fn() }));
 
 vi.mock('@inertiajs/react', () => ({
     Link: ({
@@ -22,6 +25,14 @@ vi.mock('@/components/post-modal', () => ({
         open ? <div data-testid="post-modal">Post modal</div> : null,
 }));
 
+vi.mock('@/hooks/use-mobile', () => ({
+    useIsMobile: () => viewport.isMobile,
+}));
+
+vi.mock('@/hooks/use-optimistic-like', () => ({
+    useOptimisticLike: () => likeMock,
+}));
+
 const post: Post = {
     id: 7,
     caption: 'A day by the sea',
@@ -38,6 +49,16 @@ const post: Post = {
     },
     can: { update: false, delete: false },
 };
+
+beforeEach(() => {
+    viewport.isMobile = false;
+    likeMock.liked = false;
+    likeMock.toggle.mockReset();
+});
+
+afterEach(() => {
+    vi.useRealTimers();
+});
 
 describe('PostCard', () => {
     it('shows the post content and counts', () => {
@@ -58,6 +79,20 @@ describe('PostCard', () => {
         expect(
             screen.getByRole('button', { name: /edit post/i }),
         ).toBeInTheDocument();
+    });
+
+    it('keeps every interactive post-card region as a sibling', () => {
+        const { container } = render(
+            <PostCard
+                post={post}
+                actions={<button>Edit post</button>}
+                likeButton={<button>Custom likes</button>}
+            />,
+        );
+
+        expect(
+            container.querySelector('a a, a button, button a, button button'),
+        ).toBeNull();
     });
 
     it('renders a supplied like button instead of the fallback count', () => {
@@ -88,6 +123,51 @@ describe('PostCard', () => {
 
         await user.click(
             screen.getByRole('button', { name: 'A day by the sea' }),
+        );
+
+        expect(screen.getByTestId('post-modal')).toBeInTheDocument();
+    });
+
+    it('likes an unliked post after a mobile media double tap', () => {
+        viewport.isMobile = true;
+        vi.useFakeTimers();
+        render(<PostCard post={post} />);
+        const media = screen.getByRole('button', {
+            name: 'A day by the sea',
+        });
+
+        fireEvent.click(media, { detail: 1 });
+        fireEvent.click(media, { detail: 2 });
+        vi.runAllTimers();
+
+        expect(likeMock.toggle).toHaveBeenCalledOnce();
+        expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
+    });
+
+    it('does not unlike an already-liked post after a mobile double tap', () => {
+        viewport.isMobile = true;
+        likeMock.liked = true;
+        vi.useFakeTimers();
+        render(<PostCard post={post} />);
+        const media = screen.getByRole('button', {
+            name: 'A day by the sea',
+        });
+
+        fireEvent.click(media, { detail: 1 });
+        fireEvent.click(media, { detail: 2 });
+        vi.runAllTimers();
+
+        expect(likeMock.toggle).not.toHaveBeenCalled();
+        expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
+    });
+
+    it('opens immediately when mobile media is keyboard activated', () => {
+        viewport.isMobile = true;
+        render(<PostCard post={post} />);
+
+        fireEvent.click(
+            screen.getByRole('button', { name: 'A day by the sea' }),
+            { detail: 0 },
         );
 
         expect(screen.getByTestId('post-modal')).toBeInTheDocument();

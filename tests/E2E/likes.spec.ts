@@ -31,6 +31,20 @@ test('a user can like a post', async ({ page }) => {
     ).toBeVisible();
 });
 
+test('a mobile image double tap likes its post', async ({ page }) => {
+    await page.setViewportSize({ width: 414, height: 896 });
+    await login(page);
+    const caption = uniqueValue('double-tap-like');
+    await createPost(page, caption);
+    const post = postArticle(page, caption);
+
+    await post.getByRole('button', { name: caption, exact: true }).dblclick();
+
+    const unlikeButton = post.getByRole('button', { name: 'Unlike post' });
+    await expect(unlikeButton).toBeVisible();
+    await expect(unlikeButton.getByText('1')).toBeVisible();
+});
+
 test('a like count stays updated in a profile post modal', async ({ page }) => {
     await login(page);
     const caption = uniqueValue('profile-like-post');

@@ -1,11 +1,13 @@
 import { Link } from '@inertiajs/react';
 import { Heart, MessageCircle } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { useState } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PostImage from '@/components/post-image';
 import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useOptimisticLike } from '@/hooks/use-optimistic-like';
 import { formatCount, formatPostDate } from '@/lib/format';
 import {
     POST_ACTION_CLASS,
@@ -30,7 +32,42 @@ export default function PostCard({
     className,
 }: Props) {
     const getInitials = useInitials();
+    const isMobile = useIsMobile();
+    const { liked, toggle } = useOptimisticLike(post);
     const [modalOpen, setModalOpen] = useState(false);
+    const pendingMediaTap = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (pendingMediaTap.current !== null) {
+                clearTimeout(pendingMediaTap.current);
+            }
+        };
+    }, []);
+
+    function handleMediaClick(event: MouseEvent<HTMLButtonElement>) {
+        if (!isMobile || event.detail === 0) {
+            setModalOpen(true);
+
+            return;
+        }
+
+        if (pendingMediaTap.current === null) {
+            pendingMediaTap.current = setTimeout(() => {
+                pendingMediaTap.current = null;
+                setModalOpen(true);
+            }, 250);
+
+            return;
+        }
+
+        clearTimeout(pendingMediaTap.current);
+        pendingMediaTap.current = null;
+
+        if (!liked) {
+            toggle();
+        }
+    }
 
     return (
         <article className={cn('border-b border-border pb-3', className)}>
@@ -72,7 +109,7 @@ export default function PostCard({
 
             <button
                 type="button"
-                onClick={() => setModalOpen(true)}
+                onClick={handleMediaClick}
                 className="block w-full cursor-pointer text-left"
             >
                 <div className="aspect-square w-full max-w-full overflow-hidden bg-muted">
