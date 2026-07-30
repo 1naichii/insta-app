@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import AppNavDock from '@/components/app-nav-dock';
 import AppNavRail from '@/components/app-nav-rail';
@@ -81,5 +82,16 @@ describe('AppNavRail', () => {
             'aria-current',
             'page',
         );
+    });
+
+    it('stays expanded while the account menu is open', async () => {
+        const user = userEvent.setup();
+        render(<AppNavRail />);
+
+        const navigation = screen.getByRole('navigation', { name: 'Main' });
+        await user.click(screen.getByRole('button', { name: 'Ada Lovelace' }));
+
+        expect(navigation).toHaveAttribute('data-state', 'open');
+        expect(navigation).toHaveClass('data-[state=open]:w-[244px]');
     });
 });

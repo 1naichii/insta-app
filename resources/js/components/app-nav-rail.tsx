@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import { House, Settings, SquarePlus } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppAccountMenu } from '@/components/app-account-menu';
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -29,7 +30,7 @@ function NavRailLink({ href, active, label, children }: NavRailLinkProps) {
             )}
         >
             {children}
-            <span className="truncate text-sm whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="truncate text-sm whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-data-[state=open]:opacity-100">
                 {label}
             </span>
         </Link>
@@ -40,6 +41,7 @@ export default function AppNavRail() {
     const { auth } = usePage().props;
     const { isCurrentUrl } = useCurrentUrl();
     const getInitials = useInitials();
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
     if (!auth.user) {
         return null;
@@ -55,11 +57,12 @@ export default function AppNavRail() {
     return (
         <nav
             aria-label="Main"
-            className="group fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col overflow-hidden border-r border-border bg-sidebar transition-[width] duration-200 ease-in-out hover:w-[244px] md:flex"
+            data-state={accountMenuOpen ? 'open' : 'closed'}
+            className="group fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col overflow-hidden border-r border-border bg-sidebar transition-[width] duration-200 ease-in-out hover:w-[244px] data-[state=open]:w-[244px] md:flex"
         >
             <div className="flex h-16 shrink-0 items-center gap-3 overflow-hidden px-[23px]">
                 <AppLogoIcon className="size-7 shrink-0 text-foreground" />
-                <span className="truncate text-lg font-semibold whitespace-nowrap text-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <span className="truncate text-lg font-semibold whitespace-nowrap text-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-data-[state=open]:opacity-100">
                     InstaApp
                 </span>
             </div>
@@ -107,7 +110,7 @@ export default function AppNavRail() {
             </div>
 
             <div className="px-3 py-3">
-                <AppAccountMenu showLabel />
+                <AppAccountMenu showLabel onOpenChange={setAccountMenuOpen} />
             </div>
         </nav>
     );

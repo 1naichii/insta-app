@@ -44,6 +44,23 @@ test('a user can log out', async ({ page }) => {
     await expect(page).toHaveURL(/\/login$/);
 });
 
+test('the desktop navigation rail stays expanded with its account menu open', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await login(page);
+
+    const navigation = page.locator('nav[aria-label="Main"]:visible');
+    await navigation.hover();
+    await expect(navigation).toHaveCSS('width', '244px');
+    await navigation
+        .getByRole('button', { name: 'Demo User', exact: true })
+        .click();
+    await page.getByText('Log out', { exact: true }).hover();
+
+    await expect(navigation).toHaveCSS('width', '244px');
+});
+
 test('a guest is redirected to login', async ({ page }) => {
     await page.goto('/feed');
 

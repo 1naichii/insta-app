@@ -27,6 +27,7 @@ type AppAccountMenuProps = {
      * purposes but visually hidden via `sr-only`.
      */
     showLabel?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -34,7 +35,10 @@ type AppAccountMenuProps = {
  * avatar: the navigation already shows the avatar on its Profile link, and
  * two avatars side by side read as a duplicated control.
  */
-export function AppAccountMenu({ showLabel = false }: AppAccountMenuProps) {
+export function AppAccountMenu({
+    showLabel = false,
+    onOpenChange,
+}: AppAccountMenuProps) {
     const { auth } = usePage().props;
     const isMobile = useIsMobile();
     const cleanup = useMobileNavigation();
@@ -114,7 +118,7 @@ export function AppAccountMenu({ showLabel = false }: AppAccountMenuProps) {
     }
 
     return (
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={onOpenChange}>
             <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
             <DropdownMenuContent
                 className="w-64 rounded-xl p-1.5"
