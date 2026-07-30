@@ -19,9 +19,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/likes', [LikeController::class, 'store'])->name('posts.likes.store');
     Route::delete('posts/{post}/likes', [LikeController::class, 'destroy'])->name('posts.likes.destroy');
+    Route::get('posts/{post}/comments', [CommentController::class, 'index'])->name('posts.comments.index');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('posts.comments.store');
     Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-    Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
 
     Route::get('@{user:username}', [UserProfileController::class, 'show'])->name('profile.show');
 });
