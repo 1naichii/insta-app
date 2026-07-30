@@ -38,7 +38,7 @@ describe('PostCard', () => {
         expect(
             screen.getByRole('img', { name: 'A day by the sea' }),
         ).toHaveAttribute('src', post.image_url);
-        expect(screen.getByText('1.5K')).toBeInTheDocument();
+        expect(screen.getByText('1.5K likes')).toBeInTheDocument();
         expect(screen.getByText('12')).toBeInTheDocument();
     });
 
@@ -58,6 +58,6 @@ describe('PostCard', () => {
         expect(
             screen.getByRole('button', { name: /custom likes/i }),
         ).toBeInTheDocument();
-        expect(screen.queryByText('1.5K')).not.toBeInTheDocument();
+        expect(screen.queryByText('1.5K likes')).not.toBeInTheDocument();
     });
 });

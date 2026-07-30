@@ -25,18 +25,13 @@ export default function PostCard({
     const getInitials = useInitials();
 
     return (
-        <article
-            className={cn(
-                'overflow-hidden rounded-lg border border-border bg-card',
-                className,
-            )}
-        >
-            <header className="flex items-center justify-between gap-2 p-3">
+        <article className={cn('border-b border-border pb-3', className)}>
+            <header className="flex items-center gap-2 px-3 py-2.5">
                 <Link
                     href={showProfile(post.user.username)}
-                    className="flex items-center gap-2"
+                    className="flex min-w-0 flex-1 items-center gap-2"
                 >
-                    <Avatar>
+                    <Avatar className="size-8">
                         <AvatarImage
                             src={post.user.avatar_url ?? undefined}
                             alt={post.user.username}
@@ -45,8 +40,22 @@ export default function PostCard({
                             {getInitials(post.user.name)}
                         </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">
-                        {post.user.username}
+                    <span className="flex min-w-0 items-center gap-1 text-sm">
+                        <span className="truncate font-medium text-foreground">
+                            {post.user.username}
+                        </span>
+                        <span
+                            aria-hidden="true"
+                            className="text-muted-foreground"
+                        >
+                            &middot;
+                        </span>
+                        <time
+                            dateTime={post.created_at}
+                            className="shrink-0 text-muted-foreground"
+                        >
+                            {formatPostDate(post.created_at)}
+                        </time>
                     </span>
                 </Link>
 
@@ -66,43 +75,48 @@ export default function PostCard({
                 </div>
             </Link>
 
-            <div className="space-y-2 p-3">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="px-3 pt-2">
+                <div className="-ml-2 flex items-center gap-2">
                     {likeButton ?? (
-                        <span className="flex items-center gap-1">
-                            <Heart className="size-4" aria-hidden="true" />
-                            <span>
-                                <span className="sr-only">Likes: </span>
-                                {formatCount(post.likes_count)}
-                            </span>
+                        <span className="inline-flex items-center rounded-full p-2 text-foreground">
+                            <Heart
+                                className="size-6"
+                                strokeWidth={1.5}
+                                aria-hidden="true"
+                            />
+                            <span className="sr-only">Like post</span>
                         </span>
                     )}
-                    <span className="flex items-center gap-1">
-                        <MessageCircle className="size-4" aria-hidden="true" />
-                        <span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full p-2 text-foreground">
+                        <MessageCircle
+                            className="size-6"
+                            strokeWidth={1.5}
+                            aria-hidden="true"
+                        />
+                        <span className="text-sm">
                             <span className="sr-only">Comments: </span>
                             {formatCount(post.comments_count)}
                         </span>
                     </span>
                 </div>
 
-                <Link href={show(post.id)} className="block space-y-2">
-                    {post.caption && (
-                        <p className="text-sm text-foreground">
-                            <span className="font-medium">
-                                {post.user.username}
-                            </span>{' '}
-                            {post.caption}
-                        </p>
-                    )}
+                {!likeButton && (
+                    <p className="text-sm font-semibold text-foreground">
+                        {formatCount(post.likes_count)} likes
+                    </p>
+                )}
 
-                    <time
-                        dateTime={post.created_at}
-                        className="block text-xs text-muted-foreground"
+                {post.caption && (
+                    <Link
+                        href={show(post.id)}
+                        className="mt-1 block text-sm text-foreground"
                     >
-                        {formatPostDate(post.created_at)}
-                    </time>
-                </Link>
+                        <span className="font-medium">
+                            {post.user.username}
+                        </span>{' '}
+                        {post.caption}
+                    </Link>
+                )}
             </div>
         </article>
     );

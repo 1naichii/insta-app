@@ -34,7 +34,7 @@ class PostController extends Controller
             ->through(fn (Post $post) => PostSerializer::post($post));
 
         return Inertia::render('posts/index', [
-            'posts' => $posts,
+            'posts' => Inertia::scroll($posts),
         ]);
     }
 

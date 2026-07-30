@@ -1,24 +1,17 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, InfiniteScroll, Link } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import EmptyState from '@/components/empty-state';
 import PostActionsMenu from '@/components/post-actions-menu';
 import PostCard from '@/components/post-card';
 import PostLikeButton from '@/components/post-like-button';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import { create } from '@/routes/posts';
 import type { Paginated, Post } from '@/types';
 
 type Props = {
     posts: Paginated<Post>;
 };
-
-function decodeHtmlEntities(label: string): string {
-    return label
-        .replaceAll('&laquo;', '«')
-        .replaceAll('&raquo;', '»')
-        .replaceAll('&amp;', '&');
-}
 
 export default function PostsIndex({ posts }: Props) {
     return (
@@ -50,7 +43,13 @@ export default function PostsIndex({ posts }: Props) {
                         }
                     />
                 ) : (
-                    <div className="space-y-6">
+                    <InfiniteScroll
+                        data="posts"
+                        className="space-y-6"
+                        loading={
+                            <Skeleton className="h-96 w-full rounded-xl" />
+                        }
+                    >
                         {posts.data.map((post) => (
                             <PostCard
                                 key={post.id}
@@ -59,40 +58,7 @@ export default function PostsIndex({ posts }: Props) {
                                 likeButton={<PostLikeButton post={post} />}
                             />
                         ))}
-                    </div>
-                )}
-
-                {posts.last_page > 1 && (
-                    <nav
-                        aria-label="Pagination"
-                        className="flex flex-wrap items-center justify-center gap-1"
-                    >
-                        {posts.links.map((link, linkIndex) =>
-                            link.url ? (
-                                <Link
-                                    key={linkIndex}
-                                    href={link.url}
-                                    preserveScroll
-                                    className={cn(
-                                        'rounded-md px-3 py-1.5 text-sm',
-                                        link.active
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                    )}
-                                >
-                                    {decodeHtmlEntities(link.label)}
-                                </Link>
-                            ) : (
-                                <span
-                                    key={linkIndex}
-                                    aria-disabled="true"
-                                    className="rounded-md px-3 py-1.5 text-sm text-muted-foreground/50"
-                                >
-                                    {decodeHtmlEntities(link.label)}
-                                </span>
-                            ),
-                        )}
-                    </nav>
+                    </InfiniteScroll>
                 )}
             </div>
         </>
