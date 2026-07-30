@@ -26,18 +26,10 @@ export default function CreatePost() {
                 <Form {...store.form()} disableWhileProcessing>
                     {({ processing, errors }) => (
                         <Card className="gap-0 overflow-hidden py-0">
-                            <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border py-4">
+                            <CardHeader className="border-b border-border py-4">
                                 <h1 className="text-xl font-semibold tracking-tight text-foreground">
                                     New post
                                 </h1>
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    data-test="create-post-button"
-                                >
-                                    {processing && <Spinner />}
-                                    Share
-                                </Button>
                             </CardHeader>
 
                             <CardContent className="grid gap-6 p-4 md:grid-cols-[minmax(0,1fr)_20rem] md:p-6">
@@ -75,9 +67,17 @@ export default function CreatePost() {
                                 </div>
                             </CardContent>
 
-                            <CardFooter className="justify-end border-t border-border p-4">
+                            <CardFooter className="flex-wrap justify-end gap-2 border-t border-border p-4">
                                 <Button asChild variant="ghost">
                                     <Link href={index()}>Cancel</Link>
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    data-test="create-post-button"
+                                >
+                                    {processing && <Spinner />}
+                                    Share
                                 </Button>
                             </CardFooter>
                         </Card>

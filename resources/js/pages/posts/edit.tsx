@@ -31,18 +31,10 @@ export default function EditPost({ post }: Props) {
                 <Form {...update.form(post.id)} disableWhileProcessing>
                     {({ processing, errors }) => (
                         <Card className="gap-0 overflow-hidden py-0">
-                            <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border py-4">
+                            <CardHeader className="border-b border-border py-4">
                                 <h1 className="text-xl font-semibold tracking-tight text-foreground">
                                     Edit post
                                 </h1>
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    data-test="update-post-button"
-                                >
-                                    {processing && <Spinner />}
-                                    Save changes
-                                </Button>
                             </CardHeader>
 
                             <CardContent className="grid gap-6 p-4 md:grid-cols-[minmax(0,1fr)_20rem] md:p-6">
@@ -87,9 +79,17 @@ export default function EditPost({ post }: Props) {
                                 </div>
                             </CardContent>
 
-                            <CardFooter className="justify-end border-t border-border p-4">
+                            <CardFooter className="flex-wrap justify-end gap-2 border-t border-border p-4">
                                 <Button asChild variant="ghost">
                                     <Link href={index()}>Cancel</Link>
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    data-test="update-post-button"
+                                >
+                                    {processing && <Spinner />}
+                                    Save changes
                                 </Button>
                             </CardFooter>
                         </Card>
