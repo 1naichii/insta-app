@@ -41,7 +41,7 @@ class UserProfileController extends Controller
                 'likes_received_count' => $user->likes_received_count,
                 'is_own_profile' => $viewerId === $user->id,
             ],
-            'posts' => $posts,
+            'posts' => Inertia::scroll($posts),
         ]);
     }
 }

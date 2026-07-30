@@ -1,13 +1,13 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, InfiniteScroll, Link } from '@inertiajs/react';
 import { Heart, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
 import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import { index } from '@/routes/posts';
 import { edit as editProfile } from '@/routes/profile';
 import type { Paginated, Post, Profile } from '@/types';
@@ -16,13 +16,6 @@ type Props = {
     profile: Profile;
     posts: Paginated<Post>;
 };
-
-function decodeHtmlEntities(label: string): string {
-    return label
-        .replaceAll('&laquo;', '«')
-        .replaceAll('&raquo;', '»')
-        .replaceAll('&amp;', '&');
-}
 
 export default function ProfileShow({ profile, posts }: Props) {
     const getInitials = useInitials();
@@ -113,7 +106,11 @@ export default function ProfileShow({ profile, posts }: Props) {
                         }
                     />
                 ) : (
-                    <div className="grid grid-cols-3 gap-1 sm:gap-2">
+                    <InfiniteScroll
+                        data="posts"
+                        className="grid grid-cols-3 gap-1 sm:gap-2"
+                        loading={<Skeleton className="aspect-square w-full" />}
+                    >
                         {posts.data.map((post) => (
                             <button
                                 key={post.id}
@@ -150,40 +147,7 @@ export default function ProfileShow({ profile, posts }: Props) {
                                 </div>
                             </button>
                         ))}
-                    </div>
-                )}
-
-                {posts.last_page > 1 && (
-                    <nav
-                        aria-label="Pagination"
-                        className="flex flex-wrap items-center justify-center gap-1"
-                    >
-                        {posts.links.map((link, linkIndex) =>
-                            link.url ? (
-                                <Link
-                                    key={linkIndex}
-                                    href={link.url}
-                                    preserveScroll
-                                    className={cn(
-                                        'rounded-md px-3 py-1.5 text-sm',
-                                        link.active
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                    )}
-                                >
-                                    {decodeHtmlEntities(link.label)}
-                                </Link>
-                            ) : (
-                                <span
-                                    key={linkIndex}
-                                    aria-disabled="true"
-                                    className="rounded-md px-3 py-1.5 text-sm text-muted-foreground/50"
-                                >
-                                    {decodeHtmlEntities(link.label)}
-                                </span>
-                            ),
-                        )}
-                    </nav>
+                    </InfiniteScroll>
                 )}
             </div>
 
