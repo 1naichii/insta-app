@@ -46,7 +46,7 @@ test("User B cannot delete User A's comment", async ({ page }) => {
     const body = uniqueValue('protected-comment');
     await page.getByLabel('Add a comment').fill(body);
     await page.getByRole('button', { name: 'Post comment' }).click();
-    await expect(page.getByText(body)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: body })).toBeVisible();
     let commentPath: string | undefined;
     await page.route('**/comments/*', async (route) => {
         commentPath = new URL(route.request().url()).pathname;
@@ -62,7 +62,7 @@ test("User B cannot delete User A's comment", async ({ page }) => {
 
     await switchUser(page, sarahUser.email);
     await openPostModal(page, caption);
-    await expect(page.getByText(body)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: body })).toBeVisible();
     await expect(
         page.getByRole('button', {
             name: `Delete comment by ${demoUser.username}`,

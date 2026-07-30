@@ -1,6 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CommentForm from '@/components/comment-form';
 import CommentList from '@/components/comment-list';
 import PostActionsMenu from '@/components/post-actions-menu';
@@ -128,10 +128,12 @@ function CommentsBody({
 
             {isLoading && <CommentsSkeleton />}
 
-            {!isLoading && loadError && <CommentsLoadError onRetry={onRetry} />}
+            {!isLoading && loadError && comments === null && (
+                <CommentsLoadError onRetry={onRetry} />
+            )}
 
-            {!isLoading && !loadError && (
-                <CommentList comments={comments ?? []} onDeleted={onDeleted} />
+            {!isLoading && comments !== null && (
+                <CommentList comments={comments} onDeleted={onDeleted} />
             )}
         </div>
     );
@@ -159,9 +161,12 @@ function LikeRow({ post }: { post: Post }) {
 export default function PostModal({ post, open, onOpenChange }: Props) {
     const isMobile = useIsMobile();
     const getInitials = useInitials();
+    const { auth } = usePage().props;
 
     const [comments, setComments] = useState<Comment[] | null>(null);
+    const [optimisticComments, setOptimisticComments] = useState<Comment[]>([]);
     const [loadError, setLoadError] = useState(false);
+    const optimisticCommentId = useRef(-1);
 
     // No comments loaded yet and no error means a fetch is either about to
     // start or already in flight - derived instead of tracked separately, so
@@ -180,6 +185,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
 
         if (!open) {
             setComments(null);
+            setOptimisticComments([]);
             setLoadError(false);
         }
     }
@@ -194,9 +200,55 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
         setLoadError(false);
 
         return fetchComments(post.id)
-            .then((data) => setComments(data))
-            .catch(() => setLoadError(true));
+            .then((data) => {
+                setComments(data);
+
+                return true;
+            })
+            .catch(() => {
+                setLoadError(true);
+
+                return false;
+            });
     }, [post.id]);
+
+    function addOptimisticComment(body: string) {
+        const id = optimisticCommentId.current--;
+        const comment: Comment = {
+            id,
+            body,
+            created_at: new Date().toISOString(),
+            user: {
+                id: auth.user.id,
+                name: auth.user.name,
+                username: auth.user.username,
+                avatar_url: auth.user.avatar_url,
+            },
+            can: { delete: false },
+        };
+        const removeComment = () => {
+            setOptimisticComments((current) =>
+                current.filter((item) => item.id !== id),
+            );
+        };
+
+        setComments((current) => current ?? []);
+        setOptimisticComments((current) => [...current, comment]);
+
+        return {
+            onError: removeComment,
+            onSuccess: () => {
+                void loadComments().then((refreshed) => {
+                    if (refreshed) {
+                        removeComment();
+                    }
+                });
+            },
+        };
+    }
+
+    const displayedComments =
+        comments === null ? null : [...comments, ...optimisticComments];
 
     // Fetch when the modal opens. This effect's dependency array is `open`
     // (a boolean) plus `post.id`, so it only re-runs on an actual open/close
@@ -255,7 +307,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
                     <div className="flex-1 overflow-y-auto p-4">
                         <CommentsBody
                             post={post}
-                            comments={comments}
+                            comments={displayedComments}
                             isLoading={isLoading}
                             loadError={loadError}
                             onRetry={loadComments}
@@ -267,7 +319,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
                         <LikeRow post={post} />
                         <CommentForm
                             postId={post.id}
-                            onCreated={loadComments}
+                            onCreated={addOptimisticComment}
                         />
                     </div>
                 </SheetContent>
@@ -327,7 +379,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
                     <div className="flex-1 overflow-y-auto p-4">
                         <CommentsBody
                             post={post}
-                            comments={comments}
+                            comments={displayedComments}
                             isLoading={isLoading}
                             loadError={loadError}
                             onRetry={loadComments}
@@ -339,7 +391,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
                         <LikeRow post={post} />
                         <CommentForm
                             postId={post.id}
-                            onCreated={loadComments}
+                            onCreated={addOptimisticComment}
                         />
                     </div>
                 </div>

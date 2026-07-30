@@ -17,7 +17,7 @@ test('a user can create a comment', async ({ page }) => {
     await page.getByLabel('Add a comment').fill(comment);
     await page.getByRole('button', { name: 'Post comment' }).click();
 
-    await expect(page.getByText(comment)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: comment })).toBeVisible();
 });
 
 test('a user can delete their own comment', async ({ page }) => {
@@ -28,7 +28,7 @@ test('a user can delete their own comment', async ({ page }) => {
     const comment = uniqueValue('delete-comment');
     await page.getByLabel('Add a comment').fill(comment);
     await page.getByRole('button', { name: 'Post comment' }).click();
-    await expect(page.getByText(comment)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: comment })).toBeVisible();
 
     await page
         .getByRole('button', {
@@ -36,5 +36,5 @@ test('a user can delete their own comment', async ({ page }) => {
         })
         .click();
 
-    await expect(page.getByText(comment)).toHaveCount(0);
+    await expect(page.locator('p').filter({ hasText: comment })).toHaveCount(0);
 });

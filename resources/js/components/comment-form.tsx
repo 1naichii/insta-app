@@ -11,7 +11,12 @@ const MAX_COMMENT_LENGTH = 500;
 
 type Props = {
     postId: number;
-    onCreated?: () => void;
+    onCreated?: (body: string) =>
+        | {
+              onError?: () => void;
+              onSuccess?: () => void;
+          }
+        | undefined;
 };
 
 export default function CommentForm({ postId, onCreated }: Props) {
@@ -26,11 +31,15 @@ export default function CommentForm({ postId, onCreated }: Props) {
             return;
         }
 
+        const body = data.body.trim();
+        const lifecycle = onCreated?.(body);
+
         post(store.url(postId), {
             preserveScroll: true,
+            onError: () => lifecycle?.onError?.(),
             onSuccess: () => {
                 reset('body');
-                onCreated?.();
+                lifecycle?.onSuccess?.();
             },
         });
     }

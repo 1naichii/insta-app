@@ -3,7 +3,6 @@ import { MessageCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { formatPostDate } from '@/lib/format';
 import { destroy } from '@/routes/comments';
 import { show as showProfile } from '@/routes/profile';
@@ -15,28 +14,31 @@ type Props = {
 };
 
 export default function CommentList({ comments, onDeleted }: Props) {
-    const [pendingCommentIds, setPendingCommentIds] = useState<Set<number>>(
+    const [deletedCommentIds, setDeletedCommentIds] = useState<Set<number>>(
         new Set(),
+    );
+    const visibleComments = comments.filter(
+        (comment) => !deletedCommentIds.has(comment.id),
     );
 
     function deleteComment(comment: Comment) {
-        setPendingCommentIds((current) => new Set(current).add(comment.id));
+        setDeletedCommentIds((current) => new Set(current).add(comment.id));
 
         router.delete(destroy(comment.id), {
             preserveScroll: true,
-            onSuccess: () => onDeleted?.(),
-            onFinish: () => {
-                setPendingCommentIds((current) => {
+            onError: () => {
+                setDeletedCommentIds((current) => {
                     const next = new Set(current);
                     next.delete(comment.id);
 
                     return next;
                 });
             },
+            onSuccess: () => onDeleted?.(),
         });
     }
 
-    if (comments.length === 0) {
+    if (visibleComments.length === 0) {
         return (
             <EmptyState
                 title="No comments yet"
@@ -49,9 +51,7 @@ export default function CommentList({ comments, onDeleted }: Props) {
 
     return (
         <div className="divide-y divide-border">
-            {comments.map((comment) => {
-                const isPending = pendingCommentIds.has(comment.id);
-
+            {visibleComments.map((comment) => {
                 return (
                     <article
                         key={comment.id}
@@ -81,11 +81,10 @@ export default function CommentList({ comments, onDeleted }: Props) {
                                 variant="ghost"
                                 size="icon"
                                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
-                                disabled={isPending}
                                 onClick={() => deleteComment(comment)}
                                 aria-label={`Delete comment by ${comment.user.username}`}
                             >
-                                {isPending ? <Spinner /> : <Trash2 />}
+                                <Trash2 />
                             </Button>
                         )}
                     </article>

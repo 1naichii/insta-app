@@ -89,9 +89,10 @@ describe('CommentForm', () => {
         expect(textarea).toHaveValue('');
     });
 
-    it('calls onCreated when a comment is successfully submitted', async () => {
+    it('commits an optimistic comment when submission succeeds', async () => {
         const user = userEvent.setup();
-        const onCreated = vi.fn();
+        const commit = vi.fn();
+        const onCreated = vi.fn(() => ({ onSuccess: commit }));
         render(<CommentForm postId={42} onCreated={onCreated} />);
         const textarea = screen.getByRole('textbox', {
             name: /add a comment/i,
@@ -104,12 +105,35 @@ describe('CommentForm', () => {
             onSuccess: () => void;
         };
 
-        expect(onCreated).not.toHaveBeenCalled();
+        expect(onCreated).toHaveBeenCalledWith('A thoughtful comment');
+        expect(commit).not.toHaveBeenCalled();
 
         act(() => options.onSuccess());
 
-        expect(onCreated).toHaveBeenCalledOnce();
+        expect(commit).toHaveBeenCalledOnce();
         expect(formMock.reset).toHaveBeenCalledWith('body');
+    });
+
+    it('announces a comment immediately and rolls it back on error', async () => {
+        const user = userEvent.setup();
+        const rollback = vi.fn();
+        const onCreated = vi.fn(() => ({ onError: rollback }));
+        render(<CommentForm postId={42} onCreated={onCreated} />);
+
+        await user.type(
+            screen.getByRole('textbox', { name: /add a comment/i }),
+            'An optimistic comment',
+        );
+        await user.click(screen.getByRole('button', { name: /post comment/i }));
+
+        expect(onCreated).toHaveBeenCalledWith('An optimistic comment');
+
+        const options = formMock.post.mock.calls[0][1] as {
+            onError: () => void;
+        };
+        act(() => options.onError());
+
+        expect(rollback).toHaveBeenCalledOnce();
     });
 
     it('does not require onCreated to be provided', async () => {
@@ -122,11 +146,7 @@ describe('CommentForm', () => {
         await user.type(textarea, 'A thoughtful comment');
         await user.click(screen.getByRole('button', { name: /post comment/i }));
 
-        const options = formMock.post.mock.calls[0][1] as {
-            onSuccess: () => void;
-        };
-
-        expect(() => act(() => options.onSuccess())).not.toThrow();
+        expect(formMock.post).toHaveBeenCalledOnce();
     });
 
     it('disables the textarea and submit button while processing', () => {

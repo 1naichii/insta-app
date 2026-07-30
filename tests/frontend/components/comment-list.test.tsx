@@ -68,23 +68,18 @@ describe('CommentList', () => {
         ).not.toBeInTheDocument();
     });
 
-    it('disables deletion while the request is pending and restores it on finish', async () => {
+    it('prevents a second deletion while the request is pending', async () => {
         const user = userEvent.setup();
         render(<CommentList comments={[comment]} />);
-        const button = screen.getByRole('button', {
-            name: /delete comment by ada/i,
-        });
 
-        await user.click(button);
+        await user.click(
+            screen.getByRole('button', { name: /delete comment by ada/i }),
+        );
 
         expect(routerMock.delete).toHaveBeenCalledOnce();
-        expect(button).toBeDisabled();
-
-        const options = routerMock.delete.mock.calls[0][1] as {
-            onFinish: () => void;
-        };
-        act(() => options.onFinish());
-        expect(button).toBeEnabled();
+        expect(
+            screen.queryByRole('button', { name: /delete comment by ada/i }),
+        ).not.toBeInTheDocument();
     });
 
     it('calls onDeleted when a comment is successfully deleted', async () => {
@@ -107,6 +102,24 @@ describe('CommentList', () => {
         act(() => options.onSuccess());
 
         expect(onDeleted).toHaveBeenCalledOnce();
+    });
+
+    it('hides a comment immediately and restores it on error', async () => {
+        const user = userEvent.setup();
+        render(<CommentList comments={[comment]} />);
+
+        await user.click(
+            screen.getByRole('button', { name: /delete comment by ada/i }),
+        );
+
+        expect(screen.queryByText('Lovely photo')).not.toBeInTheDocument();
+
+        const options = routerMock.delete.mock.calls[0][1] as {
+            onError: () => void;
+        };
+        act(() => options.onError());
+
+        expect(screen.getByText('Lovely photo')).toBeInTheDocument();
     });
 
     it('does not require onDeleted to be provided', async () => {

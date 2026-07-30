@@ -1,10 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import PostModal from '@/components/post-modal';
 import type { Comment, Post } from '@/types';
 
 const viewport = vi.hoisted(() => ({ isMobile: false }));
+const commentFormMock = vi.hoisted(() => ({
+    lifecycle: undefined as
+        { onError?: () => void; onSuccess?: () => void } | undefined,
+}));
 
 vi.mock('@inertiajs/react', () => ({
     Link: ({
@@ -13,11 +17,43 @@ vi.mock('@inertiajs/react', () => ({
     }: ComponentProps<'a'> & { children: ReactNode }) => (
         <a {...props}>{children}</a>
     ),
+    usePage: () => ({
+        props: {
+            auth: {
+                user: {
+                    id: 1,
+                    name: 'Demo User',
+                    username: 'demo',
+                    avatar_url: null,
+                },
+            },
+        },
+    }),
 }));
 
 vi.mock('@/components/comment-form', () => ({
-    default: ({ postId }: { postId: number }) => (
-        <form aria-label={`Comment form for post ${postId}`} />
+    default: ({
+        postId,
+        onCreated,
+    }: {
+        postId: number;
+        onCreated?: (body: string) => {
+            onError?: () => void;
+            onSuccess?: () => void;
+        };
+    }) => (
+        <form aria-label={`Comment form for post ${postId}`}>
+            <button
+                type="button"
+                onClick={() => {
+                    commentFormMock.lifecycle = onCreated?.(
+                        'An optimistic comment',
+                    );
+                }}
+            >
+                Post comment
+            </button>
+        </form>
     ),
 }));
 
@@ -105,6 +141,7 @@ function responseWithComments(comments: Comment[]): Response {
 
 beforeEach(() => {
     viewport.isMobile = false;
+    commentFormMock.lifecycle = undefined;
     vi.stubGlobal('fetch', vi.fn());
 });
 
@@ -162,6 +199,23 @@ describe('PostModal', () => {
 
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
         expect(await screen.findByText('Lovely photo')).toBeInTheDocument();
+    });
+
+    it('shows a comment immediately and removes it when creation fails', async () => {
+        const user = userEvent.setup();
+        vi.mocked(fetch).mockResolvedValueOnce(responseWithComments([]));
+        render(<PostModal post={post} open onOpenChange={vi.fn()} />);
+        await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+
+        await user.click(screen.getByRole('button', { name: 'Post comment' }));
+
+        expect(screen.getByText('An optimistic comment')).toBeInTheDocument();
+
+        act(() => commentFormMock.lifecycle?.onError?.());
+
+        expect(
+            screen.queryByText('An optimistic comment'),
+        ).not.toBeInTheDocument();
     });
 
     it('renders the mobile comments sheet and closes from its back button', async () => {
