@@ -1,7 +1,7 @@
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
 import prettier from 'eslint-config-prettier/flat';
-import importX from 'eslint-plugin-import-x';
+import importX, { createNodeResolver } from 'eslint-plugin-import-x';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
@@ -53,13 +53,23 @@ export default [
             'import-x': importX,
         },
         settings: {
-            'import-x/resolver': {
-                typescript: {
-                    alwaysTryTypes: true,
-                    project: './tsconfig.json',
-                },
-                node: true,
-            },
+            'import-x/resolver-next': [
+                createNodeResolver({
+                    extensions: [
+                        '.ts',
+                        '.tsx',
+                        '.mts',
+                        '.cts',
+                        '.js',
+                        '.jsx',
+                        '.mjs',
+                        '.cjs',
+                        '.json',
+                        '.node',
+                    ],
+                    tsconfig: { configFile: './tsconfig.json' },
+                }),
+            ],
         },
         rules: {
             '@typescript-eslint/no-explicit-any': 'off',
