@@ -36,6 +36,6 @@ yarn-error.log
 /playwright-report/
 /test-results/
 /blob-report/
+/tests/E2E/.auth/
 /coverage/
 package-lock.json
-
