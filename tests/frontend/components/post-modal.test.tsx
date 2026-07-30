@@ -203,7 +203,7 @@ describe('PostModal', () => {
 
     it('shows a comment immediately and removes it when creation fails', async () => {
         const user = userEvent.setup();
-        vi.mocked(fetch).mockResolvedValueOnce(responseWithComments([]));
+        vi.mocked(fetch).mockReturnValueOnce(new Promise(() => undefined));
         render(<PostModal post={post} open onOpenChange={vi.fn()} />);
         await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
 
@@ -233,5 +233,25 @@ describe('PostModal', () => {
         await user.click(screen.getByRole('button', { name: 'Back' }));
 
         expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it('shows a multiline caption in full without clamping it', () => {
+        const multilineCaption =
+            'First line\nSecond line\nThird line\nFourth line';
+        vi.mocked(fetch).mockResolvedValueOnce(responseWithComments([]));
+        const { container } = render(
+            <PostModal
+                post={{ ...post, caption: multilineCaption }}
+                open
+                onOpenChange={vi.fn()}
+            />,
+        );
+        const caption = container.querySelector('p.whitespace-pre-line');
+
+        expect(caption?.textContent).toContain(multilineCaption);
+        expect(caption).not.toHaveClass('line-clamp-3');
+        expect(
+            screen.queryByRole('button', { name: 'see more' }),
+        ).not.toBeInTheDocument();
     });
 });

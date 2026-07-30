@@ -29,11 +29,12 @@ test('authenticated user can create a post', function () {
 
     $user = User::factory()->create();
     $image = UploadedFile::fake()->image('photo.jpg');
+    $caption = "Hello\nworld";
 
     $response = $this
         ->actingAs($user)
         ->post(route('posts.store'), [
-            'caption' => 'Hello world',
+            'caption' => $caption,
             'image' => $image,
         ]);
 
@@ -43,7 +44,7 @@ test('authenticated user can create a post', function () {
 
     expect($post)->not->toBeNull();
     expect($post->user_id)->toBe($user->id);
-    expect($post->caption)->toBe('Hello world');
+    expect($post->caption)->toBe($caption);
 
     Storage::disk('public')->assertExists($post->image_path);
 });

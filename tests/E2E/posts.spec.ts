@@ -26,6 +26,27 @@ test('the post appears in the feed', async ({ page }) => {
     await expect(page.getByText(caption)).toBeVisible();
 });
 
+test('a caption keeps user-entered line breaks in the feed', async ({
+    page,
+}) => {
+    await login(page);
+    const firstLine = uniqueValue('caption-first-line');
+    const caption = `${firstLine}\nSecond line\nThird line`;
+    await createPost(page, caption);
+    const post = page.getByRole('article').filter({ hasText: firstLine });
+    const renderedCaption = post.locator('button.whitespace-pre-line');
+
+    await expect(renderedCaption).toBeVisible();
+    expect(await renderedCaption.innerText()).toContain(
+        `${firstLine}\nSecond line\nThird line`,
+    );
+    expect(
+        await renderedCaption.evaluate(
+            (element) => getComputedStyle(element).whiteSpace,
+        ),
+    ).toBe('pre-line');
+});
+
 test('a mobile profile opens posts in a scrollable list', async ({ page }) => {
     await page.setViewportSize({ width: 414, height: 896 });
     await login(page);

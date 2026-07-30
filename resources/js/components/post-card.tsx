@@ -35,7 +35,11 @@ export default function PostCard({
     const isMobile = useIsMobile();
     const { liked, toggle } = useOptimisticLike(post);
     const [modalOpen, setModalOpen] = useState(false);
+    const [captionExpanded, setCaptionExpanded] = useState(false);
     const pendingMediaTap = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const captionNeedsExpansion =
+        post.caption !== null &&
+        (post.caption.length > 160 || post.caption.split(/\r?\n/).length > 3);
 
     useEffect(() => {
         return () => {
@@ -160,16 +164,32 @@ export default function PostCard({
                 )}
 
                 {post.caption && (
-                    <button
-                        type="button"
-                        onClick={() => setModalOpen(true)}
-                        className="mt-1 block w-full cursor-pointer text-left text-sm text-foreground"
-                    >
-                        <span className="font-medium">
-                            {post.user.username}
-                        </span>{' '}
-                        {post.caption}
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setModalOpen(true)}
+                            className={cn(
+                                'mt-1 block w-full cursor-pointer text-left text-sm whitespace-pre-line text-foreground',
+                                captionNeedsExpansion &&
+                                    !captionExpanded &&
+                                    'line-clamp-3',
+                            )}
+                        >
+                            <span className="font-medium">
+                                {post.user.username}
+                            </span>{' '}
+                            {post.caption}
+                        </button>
+                        {captionNeedsExpansion && !captionExpanded && (
+                            <button
+                                type="button"
+                                onClick={() => setCaptionExpanded(true)}
+                                className="mt-1 cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                            >
+                                see more
+                            </button>
+                        )}
+                    </>
                 )}
             </div>
 

@@ -183,4 +183,48 @@ describe('PostCard', () => {
 
         expect(screen.getByTestId('post-modal')).toBeInTheDocument();
     });
+
+    it('preserves caption line breaks in the feed', () => {
+        const multilinePost = {
+            ...post,
+            caption: 'First line\nSecond line',
+        };
+        render(<PostCard post={multilinePost} />);
+
+        const caption = screen.getByRole('button', {
+            name: /ada First line\s+Second line/,
+        });
+        expect(caption).toHaveClass('whitespace-pre-line');
+        expect(caption.textContent).toContain('First line\nSecond line');
+    });
+
+    it('clamps a long caption and expands it from a sibling control', async () => {
+        const user = userEvent.setup();
+        const longCaption = Array.from(
+            { length: 30 },
+            () => 'A descriptive moment',
+        ).join(' ');
+        const { container } = render(
+            <PostCard post={{ ...post, caption: longCaption }} />,
+        );
+        const caption = screen.getByRole('button', {
+            name: `ada ${longCaption}`,
+        });
+        const seeMore = screen.getByRole('button', { name: 'see more' });
+
+        expect(caption).toHaveClass('line-clamp-3', 'whitespace-pre-line');
+        expect(caption.contains(seeMore)).toBe(false);
+        expect(caption.parentElement).toBe(seeMore.parentElement);
+        expect(
+            container.querySelector('button button'),
+        ).not.toBeInTheDocument();
+
+        await user.click(seeMore);
+
+        expect(caption).not.toHaveClass('line-clamp-3');
+        expect(caption).toHaveTextContent(longCaption);
+        expect(
+            screen.queryByRole('button', { name: 'see more' }),
+        ).not.toBeInTheDocument();
+    });
 });
