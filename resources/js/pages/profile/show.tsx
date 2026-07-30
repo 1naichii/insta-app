@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount } from '@/lib/format';
 import { POST_ACTION_ICON_STROKE } from '@/lib/post-actions';
-import { index } from '@/routes/posts';
+import { create } from '@/routes/posts';
 import { edit as editProfile } from '@/routes/profile';
 import type { Paginated, Post, Profile } from '@/types';
 
@@ -103,7 +103,7 @@ export default function ProfileShow({ profile, posts }: Props) {
                         action={
                             profile.is_own_profile ? (
                                 <Button asChild>
-                                    <Link href={index()}>Go to feed</Link>
+                                    <Link href={create()}>New post</Link>
                                 </Button>
                             ) : undefined
                         }
