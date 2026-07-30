@@ -72,7 +72,7 @@ export default function CommentForm({ postId, onCreated }: Props) {
 
             <Button
                 type="submit"
-                className="justify-self-start"
+                className="justify-self-end"
                 disabled={processing || !data.body.trim()}
             >
                 {processing && <Spinner />}
