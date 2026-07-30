@@ -1,71 +1,131 @@
-import { router } from '@inertiajs/react';
-import { useRef, useState } from 'react';
+import { useHttp } from '@inertiajs/react';
+import { useRef, useSyncExternalStore } from 'react';
 import posts from '@/routes/posts';
 import type { Post } from '@/types';
 
-export function useOptimisticLike(post: Post) {
-    const [optimisticLike, setOptimisticLike] = useState<{
-        liked: boolean;
-        likesCount: number;
-        postId: number;
-        previousLiked: boolean;
-        previousLikesCount: number;
-    } | null>(null);
-    const [processing, setProcessing] = useState(false);
-    const processingRef = useRef(false);
+type LikeState = {
+    liked: boolean;
+    likesCount: number;
+    processing: boolean;
+};
 
-    let currentOptimisticLike = optimisticLike;
+type LikeResponse = {
+    liked: boolean;
+    likes_count: number;
+};
 
-    // Keep the confirmed intent while props are still the pre-request snapshot.
-    // Once props advance, they are authoritative even if the new value differs.
-    if (
-        currentOptimisticLike &&
-        (currentOptimisticLike.postId !== post.id ||
-            currentOptimisticLike.previousLiked !== post.liked_by_user ||
-            currentOptimisticLike.previousLikesCount !== post.likes_count)
-    ) {
-        currentOptimisticLike = null;
-        setOptimisticLike(null);
+const states = new Map<number, LikeState>();
+const listeners = new Map<number, Set<() => void>>();
+const allListeners = new Set<() => void>();
+let revision = 0;
+
+function stateFor(post: Post): LikeState {
+    const existing = states.get(post.id);
+
+    if (existing) {
+        return existing;
     }
 
-    const liked = currentOptimisticLike?.liked ?? post.liked_by_user;
-    const likesCount = currentOptimisticLike?.likesCount ?? post.likes_count;
+    const initial = {
+        liked: post.liked_by_user,
+        likesCount: post.likes_count,
+        processing: false,
+    };
+    states.set(post.id, initial);
+
+    return initial;
+}
+
+export function postLikeState(post: Post) {
+    return stateFor(post);
+}
+
+function publish(postId: number, state: LikeState) {
+    states.set(postId, state);
+    revision += 1;
+    listeners.get(postId)?.forEach((listener) => listener());
+    allListeners.forEach((listener) => listener());
+}
+
+function subscribe(postId: number, listener: () => void) {
+    const postListeners = listeners.get(postId) ?? new Set();
+    postListeners.add(listener);
+    listeners.set(postId, postListeners);
+
+    return () => {
+        postListeners.delete(listener);
+    };
+}
+
+export function usePostLikeState(post: Post) {
+    return useSyncExternalStore(
+        (listener) => subscribe(post.id, listener),
+        () => stateFor(post),
+        () => stateFor(post),
+    );
+}
+
+export function useLikesRevision() {
+    return useSyncExternalStore(
+        (listener) => {
+            allListeners.add(listener);
+
+            return () => {
+                allListeners.delete(listener);
+            };
+        },
+        () => revision,
+        () => revision,
+    );
+}
+
+export function useOptimisticLike(post: Post) {
+    const http = useHttp<Record<string, never>, LikeResponse>({});
+    const state = usePostLikeState(post);
+    const processingRef = useRef(false);
 
     function toggle() {
-        if (processingRef.current) {
+        if (processingRef.current || state.processing) {
             return;
         }
 
-        const previousLiked = liked;
-        const previousLikesCount = likesCount;
-        const nextLiked = !previousLiked;
+        const previous = state;
+        const nextLiked = !previous.liked;
 
         processingRef.current = true;
-        setProcessing(true);
-        setOptimisticLike({
+        publish(post.id, {
             liked: nextLiked,
-            likesCount: previousLikesCount + (nextLiked ? 1 : -1),
-            postId: post.id,
-            previousLiked,
-            previousLikesCount,
+            likesCount: previous.likesCount + (nextLiked ? 1 : -1),
+            processing: true,
         });
 
         const options = {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => setOptimisticLike(null),
+            onSuccess: (response: LikeResponse) => {
+                publish(post.id, {
+                    liked: response.liked,
+                    likesCount: response.likes_count,
+                    processing: true,
+                });
+            },
+            onError: () => publish(post.id, previous),
+            onHttpException: () => publish(post.id, previous),
+            onNetworkError: () => publish(post.id, previous),
+            onCancel: () => publish(post.id, previous),
             onFinish: () => {
                 processingRef.current = false;
-                setProcessing(false);
+                publish(post.id, {
+                    ...(states.get(post.id) ?? previous),
+                    processing: false,
+                });
             },
         };
 
-        if (nextLiked) {
-            router.post(posts.likes.store(post.id).url, {}, options);
-        } else {
-            router.delete(posts.likes.destroy(post.id).url, options);
-        }
+        const request = nextLiked
+            ? http.post(posts.likes.store(post.id).url, options)
+            : http.delete(posts.likes.destroy(post.id).url, options);
+
+        void request.catch(() => undefined);
     }
 
-    return { liked, likesCount, processing, toggle };
+    return { ...state, toggle };
 }

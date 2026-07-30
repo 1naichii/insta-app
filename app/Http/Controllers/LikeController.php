@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LikeController extends Controller
@@ -12,7 +12,7 @@ class LikeController extends Controller
     /**
      * Like the specified post.
      */
-    public function store(Request $request, Post $post): RedirectResponse
+    public function store(Request $request, Post $post): JsonResponse
     {
         try {
             $post->likes()->firstOrCreate([
@@ -23,18 +23,24 @@ class LikeController extends Controller
             // outcome this request wanted anyway, so treat it as a success.
         }
 
-        return back();
+        return response()->json([
+            'liked' => true,
+            'likes_count' => $post->likes()->count(),
+        ]);
     }
 
     /**
      * Remove the current user's like from the specified post.
      */
-    public function destroy(Request $request, Post $post): RedirectResponse
+    public function destroy(Request $request, Post $post): JsonResponse
     {
         $post->likes()
             ->where('user_id', $request->user()->id)
             ->delete();
 
-        return back();
+        return response()->json([
+            'liked' => false,
+            'likes_count' => $post->likes()->count(),
+        ]);
     }
 }

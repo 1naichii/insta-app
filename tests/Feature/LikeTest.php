@@ -15,9 +15,12 @@ test('user can like a post', function () {
     $user = User::factory()->create();
     $post = Post::factory()->create();
 
-    $response = $this->actingAs($user)->post(route('posts.likes.store', $post));
+    $response = $this->actingAs($user)->postJson(route('posts.likes.store', $post));
 
-    $response->assertRedirect();
+    $response->assertOk()->assertExactJson([
+        'liked' => true,
+        'likes_count' => 1,
+    ]);
     $this->assertDatabaseHas('likes', [
         'user_id' => $user->id,
         'post_id' => $post->id,
@@ -28,8 +31,14 @@ test('liking a post twice does not create a duplicate', function () {
     $user = User::factory()->create();
     $post = Post::factory()->create();
 
-    $this->actingAs($user)->post(route('posts.likes.store', $post))->assertRedirect();
-    $this->actingAs($user)->post(route('posts.likes.store', $post))->assertRedirect();
+    $this->actingAs($user)
+        ->postJson(route('posts.likes.store', $post))
+        ->assertOk()
+        ->assertExactJson(['liked' => true, 'likes_count' => 1]);
+    $this->actingAs($user)
+        ->postJson(route('posts.likes.store', $post))
+        ->assertOk()
+        ->assertExactJson(['liked' => true, 'likes_count' => 1]);
 
     expect(Like::query()
         ->where('user_id', $user->id)
@@ -52,9 +61,12 @@ test('user can unlike a post', function () {
     $post = Post::factory()->create();
     Like::factory()->for($user)->for($post)->create();
 
-    $response = $this->actingAs($user)->delete(route('posts.likes.destroy', $post));
+    $response = $this->actingAs($user)->deleteJson(route('posts.likes.destroy', $post));
 
-    $response->assertRedirect();
+    $response->assertOk()->assertExactJson([
+        'liked' => false,
+        'likes_count' => 0,
+    ]);
     $this->assertDatabaseMissing('likes', [
         'user_id' => $user->id,
         'post_id' => $post->id,
@@ -65,9 +77,12 @@ test('unliking a post that was not liked is a no-op', function () {
     $user = User::factory()->create();
     $post = Post::factory()->create();
 
-    $response = $this->actingAs($user)->delete(route('posts.likes.destroy', $post));
+    $response = $this->actingAs($user)->deleteJson(route('posts.likes.destroy', $post));
 
-    $response->assertRedirect();
+    $response->assertOk()->assertExactJson([
+        'liked' => false,
+        'likes_count' => 0,
+    ]);
     expect(Like::count())->toBe(0);
 });
 
@@ -77,18 +92,21 @@ test('a user cannot remove another user\'s like', function () {
     $post = Post::factory()->create();
     $like = Like::factory()->for($owner)->for($post)->create();
 
-    $response = $this->actingAs($otherUser)->delete(route('posts.likes.destroy', $post));
+    $response = $this->actingAs($otherUser)->deleteJson(route('posts.likes.destroy', $post));
 
-    $response->assertRedirect();
+    $response->assertOk()->assertExactJson([
+        'liked' => false,
+        'likes_count' => 1,
+    ]);
     $this->assertModelExists($like);
 });
 
 test('guest cannot like a post', function () {
     $post = Post::factory()->create();
 
-    $response = $this->post(route('posts.likes.store', $post));
+    $response = $this->postJson(route('posts.likes.store', $post));
 
-    $response->assertRedirect(route('login'));
+    $response->assertUnauthorized();
     expect(Like::count())->toBe(0);
 });
 

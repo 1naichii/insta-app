@@ -8,6 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/hooks/use-initials';
+import {
+    postLikeState,
+    useLikesRevision,
+    usePostLikeState,
+} from '@/hooks/use-optimistic-like';
 import { formatCount } from '@/lib/format';
 import { POST_ACTION_ICON_STROKE } from '@/lib/post-actions';
 import { create } from '@/routes/posts';
@@ -19,11 +24,56 @@ type Props = {
     posts: Paginated<Post>;
 };
 
+function ProfilePost({ post, onOpen }: { post: Post; onOpen: () => void }) {
+    const { likesCount } = usePostLikeState(post);
+
+    return (
+        <button
+            type="button"
+            onClick={onOpen}
+            className="group relative aspect-square w-full max-w-full cursor-pointer overflow-hidden bg-muted"
+        >
+            <PostImage
+                src={post.image_url}
+                alt={post.caption ?? `Photo shared by ${post.user.username}`}
+                loading="lazy"
+                className="size-full object-cover"
+            />
+            <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/0 text-sm font-semibold text-white opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">
+                <span className="flex items-center gap-1">
+                    <Heart
+                        className="size-4"
+                        strokeWidth={POST_ACTION_ICON_STROKE}
+                        aria-hidden="true"
+                    />
+                    {formatCount(likesCount)}
+                </span>
+                <span className="flex items-center gap-1">
+                    <MessageCircle
+                        className="size-4"
+                        strokeWidth={POST_ACTION_ICON_STROKE}
+                        aria-hidden="true"
+                    />
+                    {formatCount(post.comments_count)}
+                </span>
+            </div>
+        </button>
+    );
+}
+
 export default function ProfileShow({ profile, posts }: Props) {
     const getInitials = useInitials();
     const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const selectedPost = posts.data.find((post) => post.id === selectedPostId);
+    useLikesRevision();
+    const likesReceivedCount =
+        profile.likes_received_count +
+        posts.data.reduce(
+            (total, post) =>
+                total + postLikeState(post).likesCount - post.likes_count,
+            0,
+        );
 
     return (
         <>
@@ -72,7 +122,7 @@ export default function ProfileShow({ profile, posts }: Props) {
                             </span>
                             <span>
                                 <span className="font-semibold">
-                                    {formatCount(profile.likes_received_count)}
+                                    {formatCount(likesReceivedCount)}
                                 </span>{' '}
                                 <span className="text-muted-foreground">
                                     likes
@@ -115,47 +165,14 @@ export default function ProfileShow({ profile, posts }: Props) {
                         loading={<Skeleton className="aspect-square w-full" />}
                     >
                         {posts.data.map((post) => (
-                            <button
+                            <ProfilePost
                                 key={post.id}
-                                type="button"
-                                onClick={() => {
+                                post={post}
+                                onOpen={() => {
                                     setSelectedPostId(post.id);
                                     setModalOpen(true);
                                 }}
-                                className="group relative aspect-square w-full max-w-full cursor-pointer overflow-hidden bg-muted"
-                            >
-                                <PostImage
-                                    src={post.image_url}
-                                    alt={
-                                        post.caption ??
-                                        `Photo shared by ${post.user.username}`
-                                    }
-                                    loading="lazy"
-                                    className="size-full object-cover"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/0 text-sm font-semibold text-white opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">
-                                    <span className="flex items-center gap-1">
-                                        <Heart
-                                            className="size-4"
-                                            strokeWidth={
-                                                POST_ACTION_ICON_STROKE
-                                            }
-                                            aria-hidden="true"
-                                        />
-                                        {formatCount(post.likes_count)}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <MessageCircle
-                                            className="size-4"
-                                            strokeWidth={
-                                                POST_ACTION_ICON_STROKE
-                                            }
-                                            aria-hidden="true"
-                                        />
-                                        {formatCount(post.comments_count)}
-                                    </span>
-                                </div>
-                            </button>
+                            />
                         ))}
                     </InfiniteScroll>
                 )}

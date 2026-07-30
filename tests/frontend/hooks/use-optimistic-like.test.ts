@@ -2,12 +2,12 @@ import { act, renderHook } from '@testing-library/react';
 import { useOptimisticLike } from '@/hooks/use-optimistic-like';
 import type { Post } from '@/types';
 
-const routerMock = vi.hoisted(() => ({
+const httpMock = vi.hoisted(() => ({
     delete: vi.fn(),
     post: vi.fn(),
 }));
 
-vi.mock('@inertiajs/react', () => ({ router: routerMock }));
+vi.mock('@inertiajs/react', () => ({ useHttp: () => httpMock }));
 
 const post: Post = {
     id: 7,
@@ -27,8 +27,8 @@ const post: Post = {
 };
 
 beforeEach(() => {
-    routerMock.delete.mockReset();
-    routerMock.post.mockReset();
+    httpMock.delete.mockReset().mockReturnValue(new Promise(() => undefined));
+    httpMock.post.mockReset().mockReturnValue(new Promise(() => undefined));
 });
 
 describe('useOptimisticLike', () => {
@@ -43,15 +43,16 @@ describe('useOptimisticLike', () => {
 
         act(() => result.current.toggle());
 
-        expect(routerMock.post).toHaveBeenCalledOnce();
-        expect(routerMock.delete).not.toHaveBeenCalled();
+        expect(httpMock.post).toHaveBeenCalledOnce();
+        expect(httpMock.delete).not.toHaveBeenCalled();
     });
 
     it('rolls back when the request errors', () => {
-        const { result } = renderHook(() => useOptimisticLike(post));
+        const rollbackPost = { ...post, id: 8 };
+        const { result } = renderHook(() => useOptimisticLike(rollbackPost));
         act(() => result.current.toggle());
 
-        const options = routerMock.post.mock.calls[0][2] as {
+        const options = httpMock.post.mock.calls[0][1] as {
             onError: () => void;
             onFinish: () => void;
         };
@@ -64,51 +65,51 @@ describe('useOptimisticLike', () => {
         expect(result.current.processing).toBe(false);
     });
 
-    it('keeps the optimistic value until server props advance', () => {
-        const { result, rerender } = renderHook(
-            ({ currentPost }: { currentPost: Post }) =>
-                useOptimisticLike(currentPost),
-            { initialProps: { currentPost: post } },
-        );
+    it('replaces the optimistic value with the server response', () => {
+        const confirmedPost = { ...post, id: 9 };
+        const { result } = renderHook(() => useOptimisticLike(confirmedPost));
         act(() => result.current.toggle());
 
-        const options = routerMock.post.mock.calls[0][2] as {
+        const options = httpMock.post.mock.calls[0][1] as {
+            onSuccess: (response: {
+                liked: boolean;
+                likes_count: number;
+            }) => void;
             onFinish: () => void;
         };
-        act(() => options.onFinish());
-        rerender({ currentPost: { ...post } });
+        act(() => {
+            options.onSuccess({ liked: true, likes_count: 12 });
+            options.onFinish();
+        });
 
         expect(result.current.liked).toBe(true);
-        expect(result.current.likesCount).toBe(11);
+        expect(result.current.likesCount).toBe(12);
+        expect(result.current.processing).toBe(false);
+    });
 
-        rerender({
-            currentPost: {
-                ...post,
-                liked_by_user: true,
-                likes_count: 11,
-            },
-        });
-        rerender({
-            currentPost: {
-                ...post,
-                liked_by_user: false,
-                likes_count: 10,
-            },
-        });
+    it('propagates the state to another rendering of the same post', () => {
+        const sharedPost = { ...post, id: 10 };
+        const { result } = renderHook(() => ({
+            first: useOptimisticLike(sharedPost),
+            second: useOptimisticLike({ ...sharedPost }),
+        }));
 
-        expect(result.current.liked).toBe(false);
-        expect(result.current.likesCount).toBe(10);
+        act(() => result.current.first.toggle());
+
+        expect(result.current.second.liked).toBe(true);
+        expect(result.current.second.likesCount).toBe(11);
+        expect(result.current.second.processing).toBe(true);
     });
 
     it('optimistically removes an existing like', () => {
         const { result } = renderHook(() =>
-            useOptimisticLike({ ...post, liked_by_user: true }),
+            useOptimisticLike({ ...post, id: 11, liked_by_user: true }),
         );
 
         act(() => result.current.toggle());
 
         expect(result.current.liked).toBe(false);
         expect(result.current.likesCount).toBe(9);
-        expect(routerMock.delete).toHaveBeenCalledOnce();
+        expect(httpMock.delete).toHaveBeenCalledOnce();
     });
 });
