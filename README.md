@@ -6,11 +6,11 @@ InstaApp is a full-stack social photo-sharing application built with Laravel and
 
 - Registration, authentication, email verification, two-factor authentication, and passkeys
 - Image posts with optional captions
-- Chronological post feed and individual post pages
+- Chronological post feed that loads more posts as you scroll
 - Post editing and deletion for post owners
 - Likes with one like per user and post
-- Comments with author-only deletion
-- Public user profiles addressed by username
+- Comments in a desktop modal or mobile bottom sheet, with author-only deletion
+- Public user profiles addressed by username, with grids that load more posts as you scroll
 - Seeded demo content with locally generated placeholder images
 
 ## Tech stack
@@ -71,7 +71,7 @@ On PowerShell, replace `cp .env.example .env` with `Copy-Item .env.example .env`
 
 ## Tests
 
-The current suite contains 125 Pest tests, 53 Vitest tests, and 15 Playwright scenarios.
+The current suite contains 126 Pest tests, 70 Vitest tests, and 15 Playwright scenarios.
 
 Prepare the backend test environment before running Pest:
 
