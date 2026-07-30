@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -38,13 +37,12 @@ test('user has many likes', function () {
     $this->assertEqualsCanonicalizing($likes->modelKeys(), $user->likes->modelKeys());
 });
 
-test('avatar url is a full public URL when set and null when absent', function () {
+test('avatar url is origin-relative when set and null when absent', function () {
     $userWithAvatar = User::factory()->create(['avatar' => 'avatars/profile.jpg']);
     $userWithoutAvatar = User::factory()->create(['avatar' => null]);
 
     expect($userWithAvatar->avatar_url)
-        ->toBe(Storage::disk('public')->url('avatars/profile.jpg'))
-        ->toStartWith(config('app.url'))
+        ->toBe('/storage/avatars/profile.jpg')
         ->and($userWithoutAvatar->avatar_url)->toBeNull();
 });
 

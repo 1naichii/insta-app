@@ -175,6 +175,19 @@ test('the feed lists posts newest first', function () {
     );
 });
 
+test('the feed uses origin-relative URLs for public images', function () {
+    $user = User::factory()->create(['avatar' => 'avatars/profile.jpg']);
+    Post::factory()->for($user)->create(['image_path' => 'posts/photo.jpg']);
+
+    $response = $this->actingAs($user)->get(route('posts.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->where('posts.data.0.image_url', '/storage/posts/photo.jpg')
+        ->where('posts.data.0.user.avatar_url', '/storage/avatars/profile.jpg')
+    );
+});
+
 test('an authenticated user can fetch a post\'s comments over the JSON endpoint', function () {
     $user = User::factory()->create();
     $post = Post::factory()->for($user)->create();
