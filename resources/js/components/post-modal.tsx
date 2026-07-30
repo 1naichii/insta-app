@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import CommentForm from '@/components/comment-form';
 import CommentList from '@/components/comment-list';
 import PostActionsMenu from '@/components/post-actions-menu';
+import PostImage from '@/components/post-image';
 import PostLikeButton from '@/components/post-like-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -275,7 +276,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
                 </DialogDescription>
 
                 <div className="flex w-3/5 items-center justify-center bg-black">
-                    <img
+                    <PostImage
                         src={post.image_url}
                         alt={
                             post.caption ??

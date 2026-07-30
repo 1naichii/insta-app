@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Heading from '@/components/heading';
 import ImageUpload from '@/components/image-upload';
 import InputError from '@/components/input-error';
+import PostImage from '@/components/post-image';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -40,7 +41,7 @@ export default function EditPost({ post }: Props) {
                             <div className="grid gap-2">
                                 <Label>Current photo</Label>
                                 <div className="overflow-hidden rounded-lg border border-border">
-                                    <img
+                                    <PostImage
                                         src={post.image_url}
                                         alt="Current post photo"
                                         className="aspect-square w-full max-w-full object-cover"

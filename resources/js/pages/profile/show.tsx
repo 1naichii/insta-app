@@ -2,6 +2,7 @@ import { Head, InfiniteScroll, Link } from '@inertiajs/react';
 import { Heart, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
+import PostImage from '@/components/post-image';
 import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -121,12 +122,13 @@ export default function ProfileShow({ profile, posts }: Props) {
                                 }}
                                 className="group relative aspect-square w-full max-w-full cursor-pointer overflow-hidden bg-muted"
                             >
-                                <img
+                                <PostImage
                                     src={post.image_url}
                                     alt={
                                         post.caption ??
                                         `Photo shared by ${post.user.username}`
                                     }
+                                    loading="lazy"
                                     className="size-full object-cover"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/0 text-sm font-semibold text-white opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">

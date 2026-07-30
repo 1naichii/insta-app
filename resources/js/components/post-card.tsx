@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { Heart, MessageCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import PostImage from '@/components/post-image';
 import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
@@ -70,12 +71,13 @@ export default function PostCard({
                 className="block w-full cursor-pointer text-left"
             >
                 <div className="aspect-square w-full max-w-full overflow-hidden bg-muted">
-                    <img
+                    <PostImage
                         src={post.image_url}
                         alt={
                             post.caption ??
                             `Photo shared by ${post.user.username}`
                         }
+                        loading="lazy"
                         className="size-full object-cover"
                     />
                 </div>
