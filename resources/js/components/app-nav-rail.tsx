@@ -64,7 +64,7 @@ export default function AppNavRail() {
                 </span>
             </div>
 
-            <div className="flex flex-1 flex-col gap-1 px-3 py-2">
+            <div className="flex flex-1 flex-col justify-center gap-1 px-3 py-2">
                 <NavRailLink
                     href={feedHref}
                     active={isCurrentUrl(feedHref)}
