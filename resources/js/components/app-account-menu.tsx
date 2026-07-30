@@ -125,8 +125,8 @@ export function AppAccountMenu({
             <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
             <DropdownMenuContent
                 className="w-64 rounded-xl p-1.5"
-                align="end"
-                side="right"
+                align="start"
+                side="top"
                 sideOffset={8}
             >
                 <UserMenuContent user={user} />

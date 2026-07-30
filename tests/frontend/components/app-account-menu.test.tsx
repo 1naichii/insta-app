@@ -57,8 +57,18 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
     DropdownMenu: ({ children }: { children: ReactNode }) => (
         <div>{children}</div>
     ),
-    DropdownMenuContent: ({ children }: { children: ReactNode }) => (
-        <div>{children}</div>
+    DropdownMenuContent: ({
+        align,
+        children,
+        side,
+    }: {
+        align?: string;
+        children: ReactNode;
+        side?: string;
+    }) => (
+        <div data-align={align} data-side={side}>
+            {children}
+        </div>
     ),
     DropdownMenuGroup: ({ children }: { children: ReactNode }) => (
         <div>{children}</div>
@@ -118,6 +128,19 @@ it('renders the desktop trigger named by the display name', () => {
     expect(
         screen.getByRole('button', { name: 'Ada Lovelace' }),
     ).toBeInTheDocument();
+});
+
+it('places the desktop account menu above the trigger', () => {
+    const { container } = render(<AppAccountMenu />);
+
+    expect(container.querySelector('[data-side]')).toHaveAttribute(
+        'data-side',
+        'top',
+    );
+    expect(container.querySelector('[data-align]')).toHaveAttribute(
+        'data-align',
+        'start',
+    );
 });
 
 it('opens mobile account actions with settings and logout', async () => {

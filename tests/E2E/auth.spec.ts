@@ -77,12 +77,26 @@ test('the desktop navigation rail stays expanded with its account menu open', as
     const navigation = page.locator('nav[aria-label="Main"]:visible');
     await navigation.hover();
     await expect(navigation).toHaveCSS('width', '244px');
-    await navigation
-        .getByRole('button', { name: 'Demo User', exact: true })
-        .click();
+    const trigger = navigation.getByRole('button', {
+        name: 'Demo User',
+        exact: true,
+    });
+    const triggerBounds = await trigger.boundingBox();
+    await trigger.click();
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
     await page.getByText('Log out', { exact: true }).hover();
 
     await expect(navigation).toHaveCSS('width', '244px');
+    const menuBounds = await menu.boundingBox();
+    expect(triggerBounds).not.toBeNull();
+    expect(menuBounds).not.toBeNull();
+    expect(menuBounds!.y + menuBounds!.height).toBeLessThanOrEqual(
+        triggerBounds!.y,
+    );
+    expect(menuBounds!.x).toBeGreaterThanOrEqual(0);
+    expect(menuBounds!.y).toBeGreaterThanOrEqual(0);
+    expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(1280);
 });
 
 test('a guest is redirected to login', async ({ page }) => {
