@@ -42,6 +42,8 @@ describe('PostImage', () => {
         expect(
             screen.queryByRole('img', { name: 'A day by the sea' }),
         ).not.toBeInTheDocument();
-        expect(screen.getByText('Photo unavailable')).toBeInTheDocument();
+        expect(
+            screen.getByText('A day by the sea. Photo unavailable.'),
+        ).toBeInTheDocument();
     });
 });

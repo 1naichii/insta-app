@@ -27,7 +27,7 @@ export default function PostImage({ src, alt, className, loading }: Props) {
                     strokeWidth={1.5}
                     aria-hidden="true"
                 />
-                <span className="sr-only">Photo unavailable</span>
+                <span className="sr-only">{alt}. Photo unavailable.</span>
             </div>
         );
     }
