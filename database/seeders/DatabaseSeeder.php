@@ -96,13 +96,32 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
+     * The directory holding the placeholder images of the environment
+     * currently being seeded.
+     *
+     * Every environment points at the same `storage/app/public` directory
+     * while using its own database, so a single shared directory would make
+     * seeding one environment destroy images another environment's database
+     * still references. Giving each environment its own subdirectory keeps
+     * the reset below destructive only to the data it just replaced.
+     */
+    private function seedImageDirectory(): string
+    {
+        return 'posts/seed/'.app()->environment();
+    }
+
+    /**
      * Remove any previously seeded post images and recreate an empty
      * directory so repeated seeding doesn't accumulate junk files.
+     *
+     * Only this environment's own subdirectory is cleared: images uploaded
+     * through the interface live directly under `posts/` and every other
+     * environment keeps its placeholders elsewhere, so neither is lost.
      */
     private function resetPostImageDirectory(): void
     {
-        Storage::disk('public')->deleteDirectory('posts');
-        Storage::disk('public')->makeDirectory('posts');
+        Storage::disk('public')->deleteDirectory($this->seedImageDirectory());
+        Storage::disk('public')->makeDirectory($this->seedImageDirectory());
     }
 
     /**
@@ -111,7 +130,7 @@ class DatabaseSeeder extends Seeder
      */
     private function storePlaceholderImage(int $index): string
     {
-        $path = 'posts/'.Str::random(20).'.jpg';
+        $path = $this->seedImageDirectory().'/'.Str::random(20).'.jpg';
 
         Storage::disk('public')->put($path, $this->generatePlaceholderImage($index));
 
