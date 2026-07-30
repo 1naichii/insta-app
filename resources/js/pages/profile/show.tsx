@@ -1,13 +1,17 @@
 import { Head, InfiniteScroll, Link } from '@inertiajs/react';
-import { Heart, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
+import PostActionsMenu from '@/components/post-actions-menu';
+import PostCard from '@/components/post-card';
 import PostImage from '@/components/post-image';
+import PostLikeButton from '@/components/post-like-button';
 import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/hooks/use-initials';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
     postLikeState,
     useLikesRevision,
@@ -63,9 +67,18 @@ function ProfilePost({ post, onOpen }: { post: Post; onOpen: () => void }) {
 
 export default function ProfileShow({ profile, posts }: Props) {
     const getInitials = useInitials();
+    const isMobile = useIsMobile();
     const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const selectedPost = posts.data.find((post) => post.id === selectedPostId);
+    const selectedPostIndex = posts.data.findIndex(
+        (post) => post.id === selectedPostId,
+    );
+    const mobilePosts =
+        selectedPostIndex === -1
+            ? posts.data
+            : posts.data.slice(selectedPostIndex);
+    const isMobilePostList = isMobile && selectedPost !== undefined;
     useLikesRevision();
     const likesReceivedCount =
         profile.likes_received_count +
@@ -79,106 +92,161 @@ export default function ProfileShow({ profile, posts }: Props) {
         <>
             <Head title={`@${profile.username}`} />
 
-            <div className="mx-auto w-full max-w-3xl space-y-8 p-4">
-                <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-                    <Avatar className="size-24 shrink-0 sm:size-28">
-                        <AvatarImage
-                            src={profile.avatar_url ?? undefined}
-                            alt={profile.username}
-                        />
-                        <AvatarFallback className="text-2xl">
-                            {getInitials(profile.name)}
-                        </AvatarFallback>
-                    </Avatar>
-
-                    <div className="min-w-0 flex-1 space-y-3">
-                        <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0">
-                                <h1 className="truncate text-xl font-semibold tracking-tight">
-                                    {profile.name}
-                                </h1>
-                                <p className="truncate text-sm text-muted-foreground">
-                                    @{profile.username}
-                                </p>
-                            </div>
-
-                            {profile.is_own_profile && (
-                                <Button asChild size="sm" variant="outline">
-                                    <Link href={editProfile()}>
-                                        Edit profile
-                                    </Link>
-                                </Button>
-                            )}
+            <div
+                className={
+                    isMobilePostList
+                        ? 'mx-auto w-full max-w-xl space-y-4 p-4'
+                        : 'mx-auto w-full max-w-3xl space-y-8 p-4'
+                }
+            >
+                {isMobilePostList ? (
+                    <>
+                        <div className="flex items-center gap-2 border-b border-border pb-3">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Back"
+                                onClick={() => setSelectedPostId(null)}
+                            >
+                                <ArrowLeft />
+                            </Button>
+                            <h1 className="text-lg font-semibold tracking-tight">
+                                @{profile.username}
+                            </h1>
                         </div>
 
-                        <div className="flex items-center justify-center gap-6 text-sm sm:justify-start">
-                            <span>
-                                <span className="font-semibold">
-                                    {formatCount(profile.posts_count)}
-                                </span>{' '}
-                                <span className="text-muted-foreground">
-                                    posts
-                                </span>
-                            </span>
-                            <span>
-                                <span className="font-semibold">
-                                    {formatCount(likesReceivedCount)}
-                                </span>{' '}
-                                <span className="text-muted-foreground">
-                                    likes
-                                </span>
-                            </span>
-                        </div>
-
-                        {profile.bio && (
-                            <p className="max-w-full text-sm whitespace-pre-line text-foreground">
-                                {profile.bio}
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                {posts.data.length === 0 ? (
-                    <EmptyState
-                        title={
-                            profile.is_own_profile
-                                ? "You haven't posted yet"
-                                : 'No posts yet'
-                        }
-                        description={
-                            profile.is_own_profile
-                                ? 'Share your first photo with the community.'
-                                : `${profile.name} hasn't shared any photos yet.`
-                        }
-                        action={
-                            profile.is_own_profile ? (
-                                <Button asChild>
-                                    <Link href={create()}>New post</Link>
-                                </Button>
-                            ) : undefined
-                        }
-                    />
+                        <InfiniteScroll
+                            data="posts"
+                            className="space-y-6"
+                            loading={
+                                <Skeleton className="h-96 w-full rounded-xl" />
+                            }
+                        >
+                            {mobilePosts.map((post) => (
+                                <PostCard
+                                    key={post.id}
+                                    post={post}
+                                    actions={<PostActionsMenu post={post} />}
+                                    likeButton={<PostLikeButton post={post} />}
+                                />
+                            ))}
+                        </InfiniteScroll>
+                    </>
                 ) : (
-                    <InfiniteScroll
-                        data="posts"
-                        className="grid grid-cols-3 gap-1 sm:gap-2"
-                        loading={<Skeleton className="aspect-square w-full" />}
-                    >
-                        {posts.data.map((post) => (
-                            <ProfilePost
-                                key={post.id}
-                                post={post}
-                                onOpen={() => {
-                                    setSelectedPostId(post.id);
-                                    setModalOpen(true);
-                                }}
+                    <>
+                        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+                            <Avatar className="size-24 shrink-0 sm:size-28">
+                                <AvatarImage
+                                    src={profile.avatar_url ?? undefined}
+                                    alt={profile.username}
+                                />
+                                <AvatarFallback className="text-2xl">
+                                    {getInitials(profile.name)}
+                                </AvatarFallback>
+                            </Avatar>
+
+                            <div className="min-w-0 flex-1 space-y-3">
+                                <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
+                                        <h1 className="truncate text-xl font-semibold tracking-tight">
+                                            {profile.name}
+                                        </h1>
+                                        <p className="truncate text-sm text-muted-foreground">
+                                            @{profile.username}
+                                        </p>
+                                    </div>
+
+                                    {profile.is_own_profile && (
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            variant="outline"
+                                        >
+                                            <Link href={editProfile()}>
+                                                Edit profile
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-center gap-6 text-sm sm:justify-start">
+                                    <span>
+                                        <span className="font-semibold">
+                                            {formatCount(profile.posts_count)}
+                                        </span>{' '}
+                                        <span className="text-muted-foreground">
+                                            posts
+                                        </span>
+                                    </span>
+                                    <span>
+                                        <span className="font-semibold">
+                                            {formatCount(likesReceivedCount)}
+                                        </span>{' '}
+                                        <span className="text-muted-foreground">
+                                            likes
+                                        </span>
+                                    </span>
+                                </div>
+
+                                {profile.bio && (
+                                    <p className="max-w-full text-sm whitespace-pre-line text-foreground">
+                                        {profile.bio}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {posts.data.length === 0 ? (
+                            <EmptyState
+                                title={
+                                    profile.is_own_profile
+                                        ? "You haven't posted yet"
+                                        : 'No posts yet'
+                                }
+                                description={
+                                    profile.is_own_profile
+                                        ? 'Share your first photo with the community.'
+                                        : `${profile.name} hasn't shared any photos yet.`
+                                }
+                                action={
+                                    profile.is_own_profile ? (
+                                        <Button asChild>
+                                            <Link href={create()}>
+                                                New post
+                                            </Link>
+                                        </Button>
+                                    ) : undefined
+                                }
                             />
-                        ))}
-                    </InfiniteScroll>
+                        ) : (
+                            <InfiniteScroll
+                                data="posts"
+                                className="grid grid-cols-3 gap-1 sm:gap-2"
+                                loading={
+                                    <Skeleton className="aspect-square w-full" />
+                                }
+                            >
+                                {posts.data.map((post) => (
+                                    <ProfilePost
+                                        key={post.id}
+                                        post={post}
+                                        onOpen={() => {
+                                            setSelectedPostId(post.id);
+
+                                            if (!isMobile) {
+                                                setModalOpen(true);
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </InfiniteScroll>
+                        )}
+                    </>
                 )}
             </div>
 
-            {selectedPost && (
+            {selectedPost && !isMobile && (
                 <PostModal
                     post={selectedPost}
                     open={modalOpen}
