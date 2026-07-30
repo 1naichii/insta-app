@@ -2,7 +2,7 @@ export type PostAuthor = {
     id: number;
     name: string;
     username: string;
-    avatar: string | null;
+    avatar_url: string | null;
 };
 
 export type Comment = {
@@ -38,4 +38,15 @@ export type Paginated<T> = {
     per_page: number;
     total: number;
     links: PaginationLink[];
+};
+
+export type Profile = {
+    id: number;
+    name: string;
+    username: string;
+    bio: string | null;
+    avatar_url: string | null;
+    posts_count: number;
+    likes_received_count: number;
+    is_own_profile: boolean;
 };

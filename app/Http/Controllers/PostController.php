@@ -6,6 +6,7 @@ use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Support\PostSerializer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -30,7 +31,7 @@ class PostController extends Controller
                 'likes as liked_by_user' => fn ($query) => $query->where('user_id', $userId),
             ])
             ->paginate(12)
-            ->through(fn (Post $post) => $this->serialize($post));
+            ->through(fn (Post $post) => PostSerializer::post($post));
 
         return Inertia::render('posts/index', [
             'posts' => $posts,
@@ -89,8 +90,8 @@ class PostController extends Controller
             ->findOrFail($post->id);
 
         return Inertia::render('posts/show', [
-            'post' => $this->serialize($post),
-            'comments' => $post->comments->map(fn (Comment $comment) => $this->serializeComment($comment)),
+            'post' => PostSerializer::post($post),
+            'comments' => $post->comments->map(fn (Comment $comment) => PostSerializer::comment($comment)),
         ]);
     }
 
@@ -102,7 +103,7 @@ class PostController extends Controller
         Gate::authorize('update', $post);
 
         return Inertia::render('posts/edit', [
-            'post' => $this->serialize($post),
+            'post' => PostSerializer::post($post),
         ]);
     }
 
@@ -165,58 +166,5 @@ class PostController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Post deleted.')]);
 
         return to_route('posts.index');
-    }
-
-    /**
-     * Serialize a post for the Inertia response.
-     *
-     * @return array<string, mixed>
-     */
-    private function serialize(Post $post): array
-    {
-        $user = request()->user();
-
-        return [
-            'id' => $post->id,
-            'caption' => $post->caption,
-            'image_url' => Storage::disk('public')->url($post->image_path),
-            'created_at' => $post->created_at->toIso8601String(),
-            'likes_count' => $post->likes_count,
-            'comments_count' => $post->comments_count,
-            'liked_by_user' => (bool) ($post->liked_by_user ?? false),
-            'user' => [
-                'id' => $post->user->id,
-                'name' => $post->user->name,
-                'username' => $post->user->username,
-                'avatar' => $post->user->avatar,
-            ],
-            'can' => [
-                'update' => $user?->can('update', $post) ?? false,
-                'delete' => $user?->can('delete', $post) ?? false,
-            ],
-        ];
-    }
-
-    /**
-     * Serialize a comment for the Inertia response.
-     *
-     * @return array<string, mixed>
-     */
-    private function serializeComment(Comment $comment): array
-    {
-        return [
-            'id' => $comment->id,
-            'body' => $comment->body,
-            'created_at' => $comment->created_at->toIso8601String(),
-            'user' => [
-                'id' => $comment->user->id,
-                'name' => $comment->user->name,
-                'username' => $comment->user->username,
-                'avatar' => $comment->user->avatar,
-            ],
-            'can' => [
-                'delete' => request()->user()?->can('delete', $comment) ?? false,
-            ],
-        ];
     }
 }

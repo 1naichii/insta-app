@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 type Props = {
     value: File | null;
     onChange: (file: File | null) => void;
+    /** Form field name, which must match the backend validation rule. */
+    name?: string;
     error?: string;
     disabled?: boolean;
     required?: boolean;
@@ -32,6 +34,7 @@ const MAX_SIZE_MB = MAX_IMAGE_SIZE_KB / 1024;
 export default function ImageUpload({
     value,
     onChange,
+    name = 'image',
     error,
     disabled = false,
     required = true,
@@ -133,7 +136,7 @@ export default function ImageUpload({
             <input
                 ref={inputRef}
                 id={inputId}
-                name="image"
+                name={name}
                 type="file"
                 accept={ACCEPT_ATTRIBUTE}
                 required={required}

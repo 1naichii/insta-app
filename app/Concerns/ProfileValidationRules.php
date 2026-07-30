@@ -19,6 +19,8 @@ trait ProfileValidationRules
             'name' => $this->nameRules(),
             'username' => $this->usernameRules($userId),
             'email' => $this->emailRules($userId),
+            'bio' => $this->bioRules(),
+            'avatar' => $this->avatarRules(),
         ];
     }
 
@@ -66,5 +68,25 @@ trait ProfileValidationRules
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),
         ];
+    }
+
+    /**
+     * Get the validation rules used to validate user bios.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function bioRules(): array
+    {
+        return ['nullable', 'string', 'max:500'];
+    }
+
+    /**
+     * Get the validation rules used to validate user avatars.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function avatarRules(): array
+    {
+        return ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'];
     }
 }

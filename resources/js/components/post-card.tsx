@@ -6,6 +6,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/posts';
+import { show as showProfile } from '@/routes/profile';
 import type { Post } from '@/types';
 
 type Props = {
@@ -31,10 +32,13 @@ export default function PostCard({
             )}
         >
             <header className="flex items-center justify-between gap-2 p-3">
-                <div className="flex items-center gap-2">
+                <Link
+                    href={showProfile(post.user.username)}
+                    className="flex items-center gap-2"
+                >
                     <Avatar>
                         <AvatarImage
-                            src={post.user.avatar ?? undefined}
+                            src={post.user.avatar_url ?? undefined}
                             alt={post.user.username}
                         />
                         <AvatarFallback>
@@ -44,7 +48,7 @@ export default function PostCard({
                     <span className="text-sm font-medium">
                         {post.user.username}
                     </span>
-                </div>
+                </Link>
 
                 {actions}
             </header>

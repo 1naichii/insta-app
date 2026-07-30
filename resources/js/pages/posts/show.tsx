@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
 import { index } from '@/routes/posts';
+import { show as showProfile } from '@/routes/profile';
 import type { Comment, Post } from '@/types';
 
 type Props = {
@@ -33,10 +34,13 @@ export default function PostsShow({ post, comments }: Props) {
 
                 <article className="overflow-hidden rounded-lg border border-border bg-card">
                     <div className="flex items-center justify-between gap-2 p-4">
-                        <div className="flex items-center gap-3">
+                        <Link
+                            href={showProfile(post.user.username)}
+                            className="flex items-center gap-3"
+                        >
                             <Avatar>
                                 <AvatarImage
-                                    src={post.user.avatar ?? undefined}
+                                    src={post.user.avatar_url ?? undefined}
                                     alt={post.user.username}
                                 />
                                 <AvatarFallback>
@@ -51,7 +55,7 @@ export default function PostsShow({ post, comments }: Props) {
                                     {post.user.name}
                                 </p>
                             </div>
-                        </div>
+                        </Link>
 
                         <PostActionsMenu post={post} />
                     </div>

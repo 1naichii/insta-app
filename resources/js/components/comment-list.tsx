@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import EmptyState from '@/components/empty-state';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatPostDate } from '@/lib/format';
 import { destroy } from '@/routes/comments';
+import { show as showProfile } from '@/routes/profile';
 import type { Comment } from '@/types';
 
 type Props = {
@@ -56,9 +57,12 @@ export default function CommentList({ comments }: Props) {
                     >
                         <div className="min-w-0 space-y-1">
                             <p className="text-sm whitespace-pre-line text-foreground">
-                                <span className="font-semibold">
+                                <Link
+                                    href={showProfile(comment.user.username)}
+                                    className="font-semibold hover:underline"
+                                >
                                     {comment.user.username}
-                                </span>{' '}
+                                </Link>{' '}
                                 {comment.body}
                             </p>
                             <time
