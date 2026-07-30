@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import {
     createPost,
@@ -10,8 +12,50 @@ import {
 test('a user can create a post with an image', async ({ page }) => {
     await login(page);
     const caption = uniqueValue('created-in-browser');
+    await page.goto('/posts/create');
+    const photo = await readFile(
+        fileURLToPath(new URL('./fixtures/photo.png', import.meta.url)),
+    );
+    const dataTransfer = await page.evaluateHandle(
+        (bytes) => {
+            const transfer = new DataTransfer();
+            transfer.items.add(
+                new File([new Uint8Array(bytes)], 'photo.png', {
+                    type: 'image/png',
+                }),
+            );
 
-    await createPost(page, caption);
+            return transfer;
+        },
+        [...photo],
+    );
+
+    await page
+        .getByText(/drag a photo here/i)
+        .locator('..')
+        .dispatchEvent('drop', { dataTransfer });
+
+    const uploadState = await page.locator('form').evaluate((form) => {
+        const input =
+            form.querySelector<HTMLInputElement>('input[type="file"]');
+        const image = new FormData(form).get('image');
+
+        return {
+            filesLength: input?.files?.length ?? 0,
+            formDataName: image instanceof File ? image.name : null,
+            formDataSize: image instanceof File ? image.size : null,
+        };
+    });
+
+    expect(uploadState).toEqual({
+        filesLength: 1,
+        formDataName: 'photo.png',
+        formDataSize: photo.length,
+    });
+
+    await page.getByLabel('Caption').fill(caption);
+    await page.getByRole('button', { name: 'Share' }).click();
+    await expect(page).toHaveURL(/\/feed$/);
 
     await expect(page.getByRole('img', { name: caption })).toBeVisible();
 });

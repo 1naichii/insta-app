@@ -1,14 +1,51 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import ImageUpload from '@/components/image-upload';
 
 const createObjectURL = vi.fn(() => 'blob:preview');
 const revokeObjectURL = vi.fn();
+let transferredFiles: FileList;
+
+class DataTransferStub {
+    public readonly items = {
+        add: vi.fn(),
+    };
+
+    public get files() {
+        return transferredFiles;
+    }
+}
+
+function allowFileListAssignment(input: HTMLInputElement) {
+    let files = input.files;
+    const emptyFiles = files;
+
+    Object.defineProperties(input, {
+        files: {
+            configurable: true,
+            get: () => files,
+            set: (nextFiles: FileList) => {
+                files = nextFiles;
+            },
+        },
+        value: {
+            configurable: true,
+            get: () => (files?.length ? `C:\\fakepath\\${files[0].name}` : ''),
+            set: (nextValue: string) => {
+                if (nextValue === '') {
+                    files = emptyFiles;
+                }
+            },
+        },
+    });
+}
 
 beforeEach(() => {
     createObjectURL.mockClear();
     revokeObjectURL.mockClear();
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    vi.stubGlobal('DataTransfer', DataTransferStub);
 });
 
 afterEach(() => {
@@ -47,10 +84,34 @@ describe('ImageUpload', () => {
         ).toBeInTheDocument();
     });
 
-    it('accepts a valid image dropped on the post dropzone', () => {
+    it('attaches a valid dropped image to the form field', async () => {
+        const user = userEvent.setup();
         const onChange = vi.fn();
         const file = new File(['image'], 'photo.png', { type: 'image/png' });
-        render(<ImageUpload value={null} onChange={onChange} />);
+        const transferInput = document.createElement('input');
+        transferInput.type = 'file';
+        await user.upload(transferInput, file);
+        transferredFiles = transferInput.files!;
+
+        function DropHarness() {
+            const [value, setValue] = useState<File | null>(null);
+
+            return (
+                <form>
+                    <ImageUpload
+                        value={value}
+                        onChange={(nextValue) => {
+                            onChange(nextValue);
+                            setValue(nextValue);
+                        }}
+                    />
+                </form>
+            );
+        }
+
+        render(<DropHarness />);
+        const input = screen.getByLabelText('Photo') as HTMLInputElement;
+        allowFileListAssignment(input);
 
         fireEvent.drop(
             screen.getByText(/drag a photo here/i).closest('label')!,
@@ -58,12 +119,31 @@ describe('ImageUpload', () => {
         );
 
         expect(onChange).toHaveBeenCalledWith(file);
+        expect(input.files).toHaveLength(1);
+        expect(input.files?.[0]).toBe(file);
+
+        await user.click(
+            screen.getByRole('button', { name: 'Remove selected image' }),
+        );
+
+        expect(input.files).toHaveLength(0);
+        expect(
+            screen.queryByRole('button', { name: 'Remove selected image' }),
+        ).not.toBeInTheDocument();
     });
 
-    it('rejects an invalid image dropped on the post dropzone', () => {
+    it('rejects an invalid image dropped on the post dropzone', async () => {
+        const user = userEvent.setup({ applyAccept: false });
         const onChange = vi.fn();
         const file = new File(['gif'], 'photo.gif', { type: 'image/gif' });
+        const transferInput = document.createElement('input');
+        transferInput.type = 'file';
+        await user.upload(transferInput, file);
+        transferredFiles = transferInput.files!;
         render(<ImageUpload value={null} onChange={onChange} />);
+        allowFileListAssignment(
+            screen.getByLabelText('Photo') as HTMLInputElement,
+        );
 
         fireEvent.drop(
             screen.getByText(/drag a photo here/i).closest('label')!,

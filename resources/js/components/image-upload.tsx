@@ -103,7 +103,16 @@ export default function ImageUpload({
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
         event.preventDefault();
         setDragging(false);
-        acceptFile(event.dataTransfer.files[0] ?? null);
+
+        const file = event.dataTransfer.files[0] ?? null;
+
+        if (inputRef.current && file) {
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            inputRef.current.files = transfer.files;
+        }
+
+        acceptFile(file);
     }
 
     function handleClear() {
