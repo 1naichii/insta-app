@@ -48,6 +48,27 @@ test('authenticated user can create a post', function () {
     Storage::disk('public')->assertExists($post->image_path);
 });
 
+test('a failed image write does not create a post', function () {
+    Storage::fake('public');
+
+    $disk = Mockery::mock(Storage::disk('public'))->makePartial();
+    $disk->shouldReceive('putFileAs')->once()->andReturnFalse();
+    Storage::set('public', $disk);
+
+    $user = User::factory()->create();
+
+    $this->withoutExceptionHandling();
+
+    expect(fn () => $this
+        ->actingAs($user)
+        ->post(route('posts.store'), [
+            'caption' => 'This must not be created',
+            'image' => UploadedFile::fake()->image('photo.jpg'),
+        ]))->toThrow(RuntimeException::class, 'Failed to store post image.');
+
+    expect(Post::count())->toBe(0);
+});
+
 test('a failed post insert rolls back the row and removes the uploaded image', function () {
     Storage::fake('public');
 

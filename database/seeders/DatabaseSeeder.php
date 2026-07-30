@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
 
     /**
      * The size, in pixels, of every generated placeholder image.
+     *
+     * @var positive-int
      */
     private const int PLACEHOLDER_IMAGE_SIZE = 800;
 
@@ -152,7 +154,7 @@ class DatabaseSeeder extends Seeder
         for ($y = 0; $y < $size; $y++) {
             $shade = 1 - ($y / $size) * 0.55;
 
-            $color = imagecolorallocate(
+            $color = $this->allocateColor(
                 $image,
                 (int) round($red * $shade),
                 (int) round($green * $shade),
@@ -170,6 +172,21 @@ class DatabaseSeeder extends Seeder
         return (string) ob_get_clean();
     }
 
+    private function allocateColor(\GdImage $image, int $red, int $green, int $blue): int
+    {
+        if ($red < 0 || $red > 255 || $green < 0 || $green > 255 || $blue < 0 || $blue > 255) {
+            throw new \InvalidArgumentException('RGB components must be between 0 and 255.');
+        }
+
+        $color = imagecolorallocate($image, $red, $green, $blue);
+
+        if ($color === false) {
+            throw new \RuntimeException('Failed to allocate a placeholder image color.');
+        }
+
+        return $color;
+    }
+
     /**
      * Stamp a centred label onto the image. GD's bitmap fonts are tiny, so the
      * text is drawn small and then scaled up, which keeps the seeder free of
@@ -181,11 +198,22 @@ class DatabaseSeeder extends Seeder
         $width = imagefontwidth($font) * strlen($text);
         $height = imagefontheight($font);
 
+        if ($width < 1 || $height < 1) {
+            throw new \InvalidArgumentException('The placeholder label must have positive dimensions.');
+        }
+
         $layer = imagecreatetruecolor($width, $height);
         imagealphablending($layer, false);
         imagesavealpha($layer, true);
-        imagefill($layer, 0, 0, imagecolorallocatealpha($layer, 0, 0, 0, 127));
-        imagestring($layer, $font, 0, 0, $text, imagecolorallocate($layer, 255, 255, 255));
+        $backgroundColor = imagecolorallocatealpha($layer, 0, 0, 0, 127);
+        $textColor = imagecolorallocate($layer, 255, 255, 255);
+
+        if ($backgroundColor === false || $textColor === false) {
+            throw new \RuntimeException('Failed to allocate a placeholder label color.');
+        }
+
+        imagefill($layer, 0, 0, $backgroundColor);
+        imagestring($layer, $font, 0, 0, $text, $textColor);
 
         $scale = 4;
         $size = imagesx($image);

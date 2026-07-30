@@ -52,6 +52,10 @@ class PostController extends Controller
     {
         $path = $request->file('image')->store('posts', 'public');
 
+        if ($path === false) {
+            throw new \RuntimeException('Failed to store post image.');
+        }
+
         try {
             DB::transaction(function () use ($request, $path): void {
                 $request->user()->posts()->create([
@@ -90,9 +94,15 @@ class PostController extends Controller
         Gate::authorize('update', $post);
 
         $previousImagePath = $post->image_path;
-        $newImagePath = $request->hasFile('image')
-            ? $request->file('image')->store('posts', 'public')
-            : null;
+        $newImagePath = null;
+
+        if ($request->hasFile('image')) {
+            $newImagePath = $request->file('image')->store('posts', 'public');
+
+            if ($newImagePath === false) {
+                throw new \RuntimeException('Failed to store post image.');
+            }
+        }
 
         try {
             DB::transaction(function () use ($request, $post, $newImagePath): void {

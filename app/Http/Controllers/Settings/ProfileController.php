@@ -37,9 +37,15 @@ class ProfileController extends Controller
 
         $attributes = collect($request->validated())->except('avatar')->all();
 
-        $newAvatarPath = $request->hasFile('avatar')
-            ? $request->file('avatar')->store('avatars', 'public')
-            : null;
+        $newAvatarPath = null;
+
+        if ($request->hasFile('avatar')) {
+            $newAvatarPath = $request->file('avatar')->store('avatars', 'public');
+
+            if ($newAvatarPath === false) {
+                throw new \RuntimeException('Failed to store profile avatar.');
+            }
+        }
 
         try {
             DB::transaction(function () use ($user, $attributes, $newAvatarPath): void {

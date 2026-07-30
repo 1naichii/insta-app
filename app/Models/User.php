@@ -27,6 +27,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $bio
  * @property string|null $avatar
  * @property-read string|null $avatar_url
+ * @property-read int $likes_received_count
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -60,6 +61,8 @@ class User extends Authenticatable implements PasskeyUser
 
     /**
      * Get the full public URL of the user's avatar.
+     *
+     * @return Attribute<string|null, never>
      */
     protected function avatarUrl(): Attribute
     {
