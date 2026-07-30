@@ -34,7 +34,7 @@ test('a user can log out', async ({ page }) => {
     await page.getByRole('button', { name: demoUser.username }).click();
     await page.getByText('Log out', { exact: true }).click();
 
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/login$/);
 });
 
 test('a guest is redirected to login', async ({ page }) => {
