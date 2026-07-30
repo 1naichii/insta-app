@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -57,11 +59,27 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post(route('login.store'), [
+        $response = $this->post(route('login.store'), [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
+        $response->assertSessionHasErrors([
+            'email' => __('auth.failed'),
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_unknown_email_receives_the_same_generic_credentials_error()
+    {
+        $response = $this->post(route('login.store'), [
+            'email' => 'unknown@example.com',
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'email' => __('auth.failed'),
+        ]);
         $this->assertGuest();
     }
 
@@ -88,5 +106,33 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertTooManyRequests();
+    }
+
+    #[DataProvider('protectedPageRoutes')]
+    public function test_guests_are_redirected_to_login_from_protected_pages(string $routeName, ?string $parameterType)
+    {
+        $routeParameter = match ($parameterType) {
+            'post' => Post::factory()->create(),
+            'user' => User::factory()->create(),
+            default => [],
+        };
+
+        $response = $this->get(route($routeName, $routeParameter));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    /**
+     * @return array<string, array{string, string|null}>
+     */
+    public static function protectedPageRoutes(): array
+    {
+        return [
+            'feed' => ['posts.index', null],
+            'create post' => ['posts.create', null],
+            'post detail' => ['posts.show', 'post'],
+            'profile settings' => ['profile.edit', null],
+            'public profile' => ['profile.show', 'user'],
+        ];
     }
 }
