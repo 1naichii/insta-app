@@ -21,8 +21,9 @@ type Props = {
 
 export default function ProfileShow({ profile, posts }: Props) {
     const getInitials = useInitials();
-    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const selectedPost = posts.data.find((post) => post.id === selectedPostId);
 
     return (
         <>
@@ -118,7 +119,7 @@ export default function ProfileShow({ profile, posts }: Props) {
                                 key={post.id}
                                 type="button"
                                 onClick={() => {
-                                    setSelectedPost(post);
+                                    setSelectedPostId(post.id);
                                     setModalOpen(true);
                                 }}
                                 className="group relative aspect-square w-full max-w-full cursor-pointer overflow-hidden bg-muted"

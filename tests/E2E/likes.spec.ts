@@ -12,6 +12,36 @@ test('a user can like a post', async ({ page }) => {
     await expect(
         post.getByRole('button', { name: 'Unlike post' }),
     ).toBeVisible();
+    await expect(
+        post.getByRole('button', { name: 'Unlike post' }).getByText('1'),
+    ).toBeVisible();
+
+    await page.waitForTimeout(1_000);
+
+    await expect(
+        post.getByRole('button', { name: 'Unlike post' }).getByText('1'),
+    ).toBeVisible();
+});
+
+test('a like count stays updated in a profile post modal', async ({ page }) => {
+    await login(page);
+    const caption = uniqueValue('profile-like-post');
+    await createPost(page, caption);
+    await page.goto('/@demo');
+    await page
+        .getByRole('button')
+        .filter({ has: page.getByRole('img', { name: caption }) })
+        .click();
+    const likeButton = page.getByRole('button', { name: 'Like post' });
+
+    await likeButton.click();
+
+    const unlikeButton = page.getByRole('button', { name: 'Unlike post' });
+    await expect(unlikeButton.getByText('1')).toBeVisible();
+
+    await page.waitForTimeout(1_000);
+
+    await expect(unlikeButton.getByText('1')).toBeVisible();
 });
 
 test('a user can unlike a post', async ({ page }) => {

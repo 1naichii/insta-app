@@ -7,12 +7,29 @@ export function useOptimisticLike(post: Post) {
     const [optimisticLike, setOptimisticLike] = useState<{
         liked: boolean;
         likesCount: number;
+        postId: number;
+        previousLiked: boolean;
+        previousLikesCount: number;
     } | null>(null);
     const [processing, setProcessing] = useState(false);
     const processingRef = useRef(false);
 
-    const liked = optimisticLike?.liked ?? post.liked_by_user;
-    const likesCount = optimisticLike?.likesCount ?? post.likes_count;
+    let currentOptimisticLike = optimisticLike;
+
+    // Keep the confirmed intent while props are still the pre-request snapshot.
+    // Once props advance, they are authoritative even if the new value differs.
+    if (
+        currentOptimisticLike &&
+        (currentOptimisticLike.postId !== post.id ||
+            currentOptimisticLike.previousLiked !== post.liked_by_user ||
+            currentOptimisticLike.previousLikesCount !== post.likes_count)
+    ) {
+        currentOptimisticLike = null;
+        setOptimisticLike(null);
+    }
+
+    const liked = currentOptimisticLike?.liked ?? post.liked_by_user;
+    const likesCount = currentOptimisticLike?.likesCount ?? post.likes_count;
 
     function toggle() {
         if (processingRef.current) {
@@ -28,6 +45,9 @@ export function useOptimisticLike(post: Post) {
         setOptimisticLike({
             liked: nextLiked,
             likesCount: previousLikesCount + (nextLiked ? 1 : -1),
+            postId: post.id,
+            previousLiked,
+            previousLikesCount,
         });
 
         const options = {
@@ -37,7 +57,6 @@ export function useOptimisticLike(post: Post) {
             onFinish: () => {
                 processingRef.current = false;
                 setProcessing(false);
-                setOptimisticLike(null);
             },
         };
 

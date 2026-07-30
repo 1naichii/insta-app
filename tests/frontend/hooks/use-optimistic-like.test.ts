@@ -64,6 +64,42 @@ describe('useOptimisticLike', () => {
         expect(result.current.processing).toBe(false);
     });
 
+    it('keeps the optimistic value until server props advance', () => {
+        const { result, rerender } = renderHook(
+            ({ currentPost }: { currentPost: Post }) =>
+                useOptimisticLike(currentPost),
+            { initialProps: { currentPost: post } },
+        );
+        act(() => result.current.toggle());
+
+        const options = routerMock.post.mock.calls[0][2] as {
+            onFinish: () => void;
+        };
+        act(() => options.onFinish());
+        rerender({ currentPost: { ...post } });
+
+        expect(result.current.liked).toBe(true);
+        expect(result.current.likesCount).toBe(11);
+
+        rerender({
+            currentPost: {
+                ...post,
+                liked_by_user: true,
+                likes_count: 11,
+            },
+        });
+        rerender({
+            currentPost: {
+                ...post,
+                liked_by_user: false,
+                likes_count: 10,
+            },
+        });
+
+        expect(result.current.liked).toBe(false);
+        expect(result.current.likesCount).toBe(10);
+    });
+
     it('optimistically removes an existing like', () => {
         const { result } = renderHook(() =>
             useOptimisticLike({ ...post, liked_by_user: true }),
