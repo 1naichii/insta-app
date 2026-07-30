@@ -2,8 +2,10 @@
 
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -43,6 +45,35 @@ test('authenticated user can create a post', function () {
     expect($post->caption)->toBe('Hello world');
 
     Storage::disk('public')->assertExists($post->image_path);
+});
+
+test('a failed post insert rolls back the row and removes the uploaded image', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $image = UploadedFile::fake()->image('photo.jpg');
+
+    Event::listen(QueryExecuted::class, function (QueryExecuted $query): void {
+        if (str_starts_with(strtolower(ltrim($query->sql)), 'insert into "posts"')) {
+            throw new RuntimeException('Forced post insert failure.');
+        }
+    });
+
+    try {
+        $this->withoutExceptionHandling();
+
+        expect(fn () => $this
+            ->actingAs($user)
+            ->post(route('posts.store'), [
+                'caption' => 'This must roll back',
+                'image' => $image,
+            ]))->toThrow(RuntimeException::class, 'Forced post insert failure.');
+    } finally {
+        Event::forget(QueryExecuted::class);
+    }
+
+    expect(Post::count())->toBe(0)
+        ->and(Storage::disk('public')->allFiles('posts'))->toBeEmpty();
 });
 
 test('post requires an image', function () {
@@ -180,6 +211,38 @@ test('owner can update a post', function () {
     $post->refresh();
     expect($post->caption)->toBe('New caption');
     Storage::disk('public')->assertExists($post->image_path);
+});
+
+test('a failed post update removes the new image and keeps the original image path', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create();
+    $originalImagePath = $post->image_path;
+    Storage::disk('public')->put($originalImagePath, 'original-image-content');
+
+    Event::listen(QueryExecuted::class, function (QueryExecuted $query): void {
+        if (str_starts_with(strtolower(ltrim($query->sql)), 'update "posts"')) {
+            throw new RuntimeException('Forced post update failure.');
+        }
+    });
+
+    try {
+        $this->withoutExceptionHandling();
+
+        expect(fn () => $this
+            ->actingAs($user)
+            ->patch(route('posts.update', $post), [
+                'caption' => 'This must roll back',
+                'image' => UploadedFile::fake()->image('replacement.jpg'),
+            ]))->toThrow(RuntimeException::class, 'Forced post update failure.');
+    } finally {
+        Event::forget(QueryExecuted::class);
+    }
+
+    expect($post->refresh()->image_path)->toBe($originalImagePath)
+        ->and($post->caption)->not->toBe('This must roll back')
+        ->and(Storage::disk('public')->allFiles('posts'))->toBe([$originalImagePath]);
 });
 
 test('owner can update only the caption without re-uploading an image', function () {
