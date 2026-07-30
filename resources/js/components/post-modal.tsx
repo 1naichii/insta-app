@@ -24,6 +24,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/hooks/use-initials';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCount, formatPostDate } from '@/lib/format';
+import {
+    POST_ACTION_CLASS,
+    POST_ACTION_ICON_CLASS,
+    POST_ACTION_ICON_STROKE,
+} from '@/lib/post-actions';
+import { cn } from '@/lib/utils';
 import { index as indexComments } from '@/routes/posts/comments';
 import { show as showProfile } from '@/routes/profile';
 import type { Comment, Post } from '@/types';
@@ -133,10 +139,14 @@ function CommentsBody({
 
 function LikeRow({ post }: { post: Post }) {
     return (
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="-ml-2 flex items-center gap-2">
             <PostLikeButton post={post} />
-            <span className="flex items-center gap-1">
-                <MessageCircle className="size-4" aria-hidden="true" />
+            <span className={cn(POST_ACTION_CLASS, 'cursor-default')}>
+                <MessageCircle
+                    className={POST_ACTION_ICON_CLASS}
+                    strokeWidth={POST_ACTION_ICON_STROKE}
+                    aria-hidden="true"
+                />
                 <span>
                     <span className="sr-only">Comments: </span>
                     {formatCount(post.comments_count)}

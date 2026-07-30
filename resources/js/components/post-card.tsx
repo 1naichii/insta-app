@@ -7,6 +7,11 @@ import PostModal from '@/components/post-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount, formatPostDate } from '@/lib/format';
+import {
+    POST_ACTION_CLASS,
+    POST_ACTION_ICON_CLASS,
+    POST_ACTION_ICON_STROKE,
+} from '@/lib/post-actions';
 import { cn } from '@/lib/utils';
 import { show as showProfile } from '@/routes/profile';
 import type { Post } from '@/types';
@@ -84,12 +89,13 @@ export default function PostCard({
             </button>
 
             <div className="px-3 pt-2">
+                {/* Cancel the shared action padding so the first icon's optical edge aligns with the content column. */}
                 <div className="-ml-2 flex items-center gap-2">
                     {likeButton ?? (
-                        <span className="inline-flex items-center rounded-full p-2 text-foreground">
+                        <span className={POST_ACTION_CLASS}>
                             <Heart
-                                className="size-6"
-                                strokeWidth={1.5}
+                                className={POST_ACTION_ICON_CLASS}
+                                strokeWidth={POST_ACTION_ICON_STROKE}
                                 aria-hidden="true"
                             />
                             <span className="sr-only">Like post</span>
@@ -99,16 +105,14 @@ export default function PostCard({
                         type="button"
                         onClick={() => setModalOpen(true)}
                         aria-label="View comments"
-                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full p-2 text-foreground"
+                        className={POST_ACTION_CLASS}
                     >
                         <MessageCircle
-                            className="size-6"
-                            strokeWidth={1.5}
+                            className={POST_ACTION_ICON_CLASS}
+                            strokeWidth={POST_ACTION_ICON_STROKE}
                             aria-hidden="true"
                         />
-                        <span className="text-sm">
-                            {formatCount(post.comments_count)}
-                        </span>
+                        <span>{formatCount(post.comments_count)}</span>
                     </button>
                 </div>
 

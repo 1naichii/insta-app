@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/hooks/use-initials';
 import { formatCount } from '@/lib/format';
+import { POST_ACTION_ICON_STROKE } from '@/lib/post-actions';
 import { index } from '@/routes/posts';
 import { edit as editProfile } from '@/routes/profile';
 import type { Paginated, Post, Profile } from '@/types';
@@ -135,6 +136,9 @@ export default function ProfileShow({ profile, posts }: Props) {
                                     <span className="flex items-center gap-1">
                                         <Heart
                                             className="size-4"
+                                            strokeWidth={
+                                                POST_ACTION_ICON_STROKE
+                                            }
                                             aria-hidden="true"
                                         />
                                         {formatCount(post.likes_count)}
@@ -142,6 +146,9 @@ export default function ProfileShow({ profile, posts }: Props) {
                                     <span className="flex items-center gap-1">
                                         <MessageCircle
                                             className="size-4"
+                                            strokeWidth={
+                                                POST_ACTION_ICON_STROKE
+                                            }
                                             aria-hidden="true"
                                         />
                                         {formatCount(post.comments_count)}

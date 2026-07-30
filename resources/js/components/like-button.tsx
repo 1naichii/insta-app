@@ -1,5 +1,10 @@
 import { Heart } from 'lucide-react';
 import { formatCount } from '@/lib/format';
+import {
+    POST_ACTION_CLASS,
+    POST_ACTION_ICON_CLASS,
+    POST_ACTION_ICON_STROKE,
+} from '@/lib/post-actions';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -25,15 +30,15 @@ export default function LikeButton({
             disabled={processing}
             onClick={onToggle}
             className={cn(
-                'inline-flex items-center gap-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                liked
-                    ? 'text-red-500 hover:text-red-600'
-                    : 'text-muted-foreground hover:text-foreground',
+                POST_ACTION_CLASS,
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                liked ? 'text-red-500 hover:text-red-600' : 'text-foreground',
                 className,
             )}
         >
             <Heart
-                className={cn('size-4', liked && 'fill-current')}
+                className={cn(POST_ACTION_ICON_CLASS, liked && 'fill-current')}
+                strokeWidth={POST_ACTION_ICON_STROKE}
                 aria-hidden="true"
             />
             <span>{formatCount(likesCount)}</span>
