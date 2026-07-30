@@ -24,10 +24,10 @@ export default function PostsIndex({ posts }: Props) {
                         Feed
                     </h1>
 
-                    <Button asChild size="sm">
+                    <Button asChild size="icon" className="size-11">
                         <Link href={create()}>
                             <Plus />
-                            New post
+                            <span className="sr-only">New post</span>
                         </Link>
                     </Button>
                 </div>

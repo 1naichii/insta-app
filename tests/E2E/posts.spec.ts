@@ -70,6 +70,25 @@ test('the post appears in the feed', async ({ page }) => {
     await expect(page.getByText(caption)).toBeVisible();
 });
 
+test('the feed new post action is an accessible icon target', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 414, height: 896 });
+    await login(page);
+
+    const action = page.getByRole('link', { name: 'New post', exact: true });
+    await expect(action).toBeVisible();
+    const bounds = await action.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.width).toBeGreaterThanOrEqual(44);
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+
+    const label = action.locator('span', { hasText: 'New post' });
+    await expect(label).toHaveCount(1);
+    await expect(label).toHaveCSS('position', 'absolute');
+    await expect(label).toHaveCSS('clip-path', 'inset(50%)');
+});
+
 test('a caption keeps user-entered line breaks in the feed', async ({
     page,
 }) => {
