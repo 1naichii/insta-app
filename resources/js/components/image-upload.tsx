@@ -1,7 +1,8 @@
 import { Upload, X } from 'lucide-react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, DragEvent } from 'react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
+import PostImage from '@/components/post-image';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -46,6 +47,7 @@ export default function ImageUpload({
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const [clientError, setClientError] = useState<string | null>(null);
+    const [dragging, setDragging] = useState(false);
 
     const preview = useMemo(
         () => (value ? createPreviewUrl(value) : null),
@@ -60,9 +62,7 @@ export default function ImageUpload({
         return () => revokePreviewUrl(preview);
     }, [preview]);
 
-    function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-        const file = event.target.files?.[0] ?? null;
-
+    function acceptFile(file: File | null) {
         if (!file) {
             setClientError(null);
             onChange(null);
@@ -86,6 +86,26 @@ export default function ImageUpload({
         onChange(file);
     }
 
+    function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+        acceptFile(event.target.files?.[0] ?? null);
+    }
+
+    function handleDragOver(event: DragEvent<HTMLLabelElement>) {
+        event.preventDefault();
+        setDragging(true);
+    }
+
+    function handleDragLeave(event: DragEvent<HTMLLabelElement>) {
+        event.preventDefault();
+        setDragging(false);
+    }
+
+    function handleDrop(event: DragEvent<HTMLLabelElement>) {
+        event.preventDefault();
+        setDragging(false);
+        acceptFile(event.dataTransfer.files[0] ?? null);
+    }
+
     function handleClear() {
         setClientError(null);
         onChange(null);
@@ -97,9 +117,9 @@ export default function ImageUpload({
 
     const displayedError = clientError ?? error;
 
-    if (displayName) {
-        return (
-            <div className="grid gap-3">
+    return (
+        <div className={cn('grid', displayName ? 'gap-3' : 'gap-2')}>
+            {displayName ? (
                 <div className="flex items-center gap-4">
                     <div className="size-16 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
                         {preview || currentImageUrl ? (
@@ -143,68 +163,67 @@ export default function ImageUpload({
                         </div>
                     </div>
                 </div>
-
-                <input
-                    ref={inputRef}
-                    id={inputId}
-                    name={name}
-                    type="file"
-                    accept={ACCEPT_ATTRIBUTE}
-                    required={required}
-                    disabled={disabled}
-                    onChange={handleFileChange}
-                    aria-invalid={Boolean(displayedError)}
-                    aria-label="Profile photo"
-                    className="sr-only"
-                />
-
-                <p className="text-xs text-muted-foreground">
-                    {ACCEPTED_LABEL} images up to {MAX_SIZE_MB}MB.
-                </p>
-
-                <InputError message={displayedError} />
-            </div>
-        );
-    }
-
-    return (
-        <div className="grid gap-2">
-            <Label htmlFor={inputId}>Photo</Label>
-
-            {preview ? (
-                <div className="relative overflow-hidden rounded-lg border border-border">
-                    <img
-                        src={preview}
-                        alt="Selected image preview"
-                        className="aspect-square w-full max-w-full object-cover"
-                    />
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={handleClear}
-                        disabled={disabled}
-                        aria-label="Remove selected image"
-                    >
-                        <X />
-                    </Button>
-                </div>
             ) : (
-                <label
-                    htmlFor={inputId}
-                    className={cn(
-                        'flex aspect-square w-full max-w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 text-muted-foreground transition-colors',
-                        disabled
-                            ? 'pointer-events-none opacity-50'
-                            : 'cursor-pointer hover:bg-muted/70',
+                <>
+                    <Label htmlFor={inputId}>Photo</Label>
+
+                    {preview || currentImageUrl ? (
+                        <div className="relative overflow-hidden rounded-lg border border-border">
+                            <PostImage
+                                src={preview ?? currentImageUrl ?? ''}
+                                alt={
+                                    preview
+                                        ? 'Selected image preview'
+                                        : 'Current post photo'
+                                }
+                                className="aspect-square w-full max-w-full object-cover"
+                            />
+                            {preview ? (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="icon"
+                                    className="absolute top-2 right-2"
+                                    onClick={handleClear}
+                                    disabled={disabled}
+                                    aria-label="Remove selected image"
+                                >
+                                    <X />
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="absolute top-2 right-2"
+                                    onClick={() => inputRef.current?.click()}
+                                    disabled={disabled}
+                                >
+                                    Change photo
+                                </Button>
+                            )}
+                        </div>
+                    ) : (
+                        <label
+                            htmlFor={inputId}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={cn(
+                                'flex aspect-square w-full max-w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 text-muted-foreground transition-colors',
+                                dragging && 'border-ring bg-muted/70',
+                                disabled
+                                    ? 'pointer-events-none opacity-50'
+                                    : 'cursor-pointer hover:bg-muted/70',
+                            )}
+                        >
+                            <Upload className="size-8" aria-hidden="true" />
+                            <span className="text-sm font-medium">
+                                Drag a photo here or click to upload
+                            </span>
+                        </label>
                     )}
-                >
-                    <Upload className="size-8" aria-hidden="true" />
-                    <span className="text-sm font-medium">
-                        Click to upload a photo
-                    </span>
-                </label>
+                </>
             )}
 
             <input
@@ -217,6 +236,7 @@ export default function ImageUpload({
                 disabled={disabled}
                 onChange={handleFileChange}
                 aria-invalid={Boolean(displayedError)}
+                aria-label={displayName ? 'Profile photo' : undefined}
                 className="sr-only"
             />
 

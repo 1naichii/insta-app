@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ImageUpload from '@/components/image-upload';
 
@@ -45,6 +45,55 @@ describe('ImageUpload', () => {
         expect(
             screen.getByText('File must be a JPG, PNG, or WEBP image.'),
         ).toBeInTheDocument();
+    });
+
+    it('accepts a valid image dropped on the post dropzone', () => {
+        const onChange = vi.fn();
+        const file = new File(['image'], 'photo.png', { type: 'image/png' });
+        render(<ImageUpload value={null} onChange={onChange} />);
+
+        fireEvent.drop(
+            screen.getByText(/drag a photo here/i).closest('label')!,
+            { dataTransfer: { files: [file] } },
+        );
+
+        expect(onChange).toHaveBeenCalledWith(file);
+    });
+
+    it('rejects an invalid image dropped on the post dropzone', () => {
+        const onChange = vi.fn();
+        const file = new File(['gif'], 'photo.gif', { type: 'image/gif' });
+        render(<ImageUpload value={null} onChange={onChange} />);
+
+        fireEvent.drop(
+            screen.getByText(/drag a photo here/i).closest('label')!,
+            { dataTransfer: { files: [file] } },
+        );
+
+        expect(onChange).toHaveBeenCalledWith(null);
+        expect(
+            screen.getByText('File must be a JPG, PNG, or WEBP image.'),
+        ).toBeInTheDocument();
+    });
+
+    it('shows the current post photo with a change control', () => {
+        render(
+            <ImageUpload
+                value={null}
+                onChange={vi.fn()}
+                currentImageUrl="/posts/current.jpg"
+            />,
+        );
+
+        expect(
+            screen.getByRole('img', { name: 'Current post photo' }),
+        ).toHaveAttribute('src', '/posts/current.jpg');
+        expect(
+            screen.getByRole('button', { name: 'Change photo' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText(/drag a photo here/i),
+        ).not.toBeInTheDocument();
     });
 
     it('previews and removes the selected image', async () => {
