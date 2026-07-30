@@ -21,6 +21,8 @@ type Props = {
     error?: string;
     disabled?: boolean;
     required?: boolean;
+    currentImageUrl?: string | null;
+    displayName?: string;
 };
 
 const ACCEPT_ATTRIBUTE = ACCEPTED_IMAGE_TYPES.join(',');
@@ -38,6 +40,8 @@ export default function ImageUpload({
     error,
     disabled = false,
     required = true,
+    currentImageUrl,
+    displayName,
 }: Props) {
     const inputId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +96,76 @@ export default function ImageUpload({
     }
 
     const displayedError = clientError ?? error;
+
+    if (displayName) {
+        return (
+            <div className="grid gap-3">
+                <div className="flex items-center gap-4">
+                    <div className="size-16 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+                        {preview || currentImageUrl ? (
+                            <img
+                                src={preview ?? currentImageUrl ?? undefined}
+                                alt={displayName}
+                                className="size-full object-cover"
+                            />
+                        ) : (
+                            <span className="flex size-full items-center justify-center text-xl font-semibold text-muted-foreground">
+                                {displayName.charAt(0).toUpperCase()}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">
+                            @{displayName}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => inputRef.current?.click()}
+                                disabled={disabled}
+                            >
+                                Change photo
+                            </Button>
+                            {value && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleClear}
+                                    disabled={disabled}
+                                >
+                                    Remove selection
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <input
+                    ref={inputRef}
+                    id={inputId}
+                    name={name}
+                    type="file"
+                    accept={ACCEPT_ATTRIBUTE}
+                    required={required}
+                    disabled={disabled}
+                    onChange={handleFileChange}
+                    aria-invalid={Boolean(displayedError)}
+                    aria-label="Profile photo"
+                    className="sr-only"
+                />
+
+                <p className="text-xs text-muted-foreground">
+                    {ACCEPTED_LABEL} images up to {MAX_SIZE_MB}MB.
+                </p>
+
+                <InputError message={displayedError} />
+            </div>
+        );
+    }
 
     return (
         <div className="grid gap-2">
