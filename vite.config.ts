@@ -62,10 +62,12 @@ export default defineConfig({
                 // factor authentication, passkeys, and appearance switching.
                 // These ship with the kit and are exercised by its own Pest
                 // tests, not rewritten for this application.
-                'resources/js/layouts/**',
+                'resources/js/layouts/auth/**',
+                'resources/js/layouts/app-layout.tsx',
                 'resources/js/pages/auth/**',
                 'resources/js/pages/settings/**',
-                'resources/js/components/app-*.tsx',
+                'resources/js/components/app-logo.tsx',
+                'resources/js/components/app-logo-icon.tsx',
                 'resources/js/components/nav-*.tsx',
                 'resources/js/components/user-*.tsx',
                 'resources/js/components/passkey-*.tsx',

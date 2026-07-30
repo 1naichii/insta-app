@@ -81,4 +81,26 @@ describe('PostCard', () => {
 
         expect(screen.getByTestId('post-modal')).toBeInTheDocument();
     });
+
+    it('opens the post modal when the media is activated', async () => {
+        const user = userEvent.setup();
+        render(<PostCard post={post} />);
+
+        await user.click(
+            screen.getByRole('button', { name: 'A day by the sea' }),
+        );
+
+        expect(screen.getByTestId('post-modal')).toBeInTheDocument();
+    });
+
+    it('opens the post modal when the caption is activated', async () => {
+        const user = userEvent.setup();
+        render(<PostCard post={post} />);
+
+        await user.click(
+            screen.getByRole('button', { name: 'ada A day by the sea' }),
+        );
+
+        expect(screen.getByTestId('post-modal')).toBeInTheDocument();
+    });
 });

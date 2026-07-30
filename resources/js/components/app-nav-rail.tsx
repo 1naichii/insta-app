@@ -84,7 +84,10 @@ export default function AppNavRail() {
                     active={isCurrentUrl(profileHref)}
                     label="Profile"
                 >
-                    <Avatar className="size-6 shrink-0 overflow-hidden rounded-full ring-1 ring-border">
+                    <Avatar
+                        aria-hidden="true"
+                        className="size-6 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
+                    >
                         <AvatarImage
                             src={user.avatar_url ?? undefined}
                             alt=""

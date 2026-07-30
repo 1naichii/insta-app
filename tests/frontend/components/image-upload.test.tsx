@@ -72,4 +72,52 @@ describe('ImageUpload', () => {
 
         expect(screen.getByLabelText('Photo')).toBeDisabled();
     });
+
+    it('shows the current profile photo in the identity-card variant', () => {
+        render(
+            <ImageUpload
+                value={null}
+                onChange={vi.fn()}
+                displayName="ada"
+                currentImageUrl="/avatars/ada.jpg"
+            />,
+        );
+
+        expect(screen.getByRole('img', { name: 'ada' })).toHaveAttribute(
+            'src',
+            '/avatars/ada.jpg',
+        );
+        expect(screen.getByText('@ada')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Change photo' }),
+        ).toBeInTheDocument();
+    });
+
+    it('shows an initial and removes a profile photo selection', async () => {
+        const user = userEvent.setup();
+        const onChange = vi.fn();
+        const file = new File(['image'], 'photo.jpg', { type: 'image/jpeg' });
+        render(
+            <ImageUpload value={file} onChange={onChange} displayName="ada" />,
+        );
+
+        expect(screen.getByRole('img', { name: 'ada' })).toHaveAttribute(
+            'src',
+            'blob:preview',
+        );
+
+        await user.click(
+            screen.getByRole('button', { name: 'Remove selection' }),
+        );
+
+        expect(onChange).toHaveBeenCalledWith(null);
+    });
+
+    it('uses the display name initial when no profile photo exists', () => {
+        render(
+            <ImageUpload value={null} onChange={vi.fn()} displayName="ada" />,
+        );
+
+        expect(screen.getByText('A')).toBeInTheDocument();
+    });
 });
