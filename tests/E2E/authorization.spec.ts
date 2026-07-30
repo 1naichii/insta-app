@@ -57,6 +57,7 @@ test("User B cannot delete User A's comment", async ({ page }) => {
             name: `Delete comment by ${demoUser.username}`,
         })
         .click();
+    await page.getByRole('button', { name: 'Confirm delete' }).click();
     await expect.poll(() => commentPath).toBeDefined();
     await page.unroute('**/comments/*');
 

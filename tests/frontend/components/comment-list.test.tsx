@@ -68,7 +68,7 @@ describe('CommentList', () => {
         ).not.toBeInTheDocument();
     });
 
-    it('prevents a second deletion while the request is pending', async () => {
+    it('waits for confirmation before optimistically deleting', async () => {
         const user = userEvent.setup();
         render(<CommentList comments={[comment]} />);
 
@@ -76,10 +76,34 @@ describe('CommentList', () => {
             screen.getByRole('button', { name: /delete comment by ada/i }),
         );
 
+        expect(routerMock.delete).not.toHaveBeenCalled();
+        expect(screen.getByText('Lovely photo')).toBeInTheDocument();
+        expect(screen.getByText('Delete this comment?')).toBeInTheDocument();
+
+        await user.click(
+            screen.getByRole('button', { name: /confirm delete/i }),
+        );
+
         expect(routerMock.delete).toHaveBeenCalledOnce();
         expect(
             screen.queryByRole('button', { name: /delete comment by ada/i }),
         ).not.toBeInTheDocument();
+    });
+
+    it('leaves the comment unchanged and sends no request when cancelled', async () => {
+        const user = userEvent.setup();
+        render(<CommentList comments={[comment]} />);
+
+        await user.click(
+            screen.getByRole('button', { name: /delete comment by ada/i }),
+        );
+        await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+        expect(routerMock.delete).not.toHaveBeenCalled();
+        expect(screen.getByText('Lovely photo')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: /delete comment by ada/i }),
+        ).toBeInTheDocument();
     });
 
     it('calls onDeleted when a comment is successfully deleted', async () => {
@@ -91,6 +115,9 @@ describe('CommentList', () => {
         });
 
         await user.click(button);
+        await user.click(
+            screen.getByRole('button', { name: /confirm delete/i }),
+        );
 
         const options = routerMock.delete.mock.calls[0][1] as {
             onSuccess: () => void;
@@ -111,6 +138,9 @@ describe('CommentList', () => {
         await user.click(
             screen.getByRole('button', { name: /delete comment by ada/i }),
         );
+        await user.click(
+            screen.getByRole('button', { name: /confirm delete/i }),
+        );
 
         expect(screen.queryByText('Lovely photo')).not.toBeInTheDocument();
 
@@ -130,6 +160,9 @@ describe('CommentList', () => {
         });
 
         await user.click(button);
+        await user.click(
+            screen.getByRole('button', { name: /confirm delete/i }),
+        );
 
         const options = routerMock.delete.mock.calls[0][1] as {
             onSuccess: () => void;

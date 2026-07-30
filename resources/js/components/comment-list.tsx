@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import DeletePostDialog from '@/components/delete-post-dialog';
 import EmptyState from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { formatPostDate } from '@/lib/format';
@@ -76,16 +77,22 @@ export default function CommentList({ comments, onDeleted }: Props) {
                         </div>
 
                         {comment.can.delete && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
-                                onClick={() => deleteComment(comment)}
-                                aria-label={`Delete comment by ${comment.user.username}`}
-                            >
-                                <Trash2 />
-                            </Button>
+                            <DeletePostDialog
+                                onConfirm={() => deleteComment(comment)}
+                                title="Delete this comment?"
+                                description="This action cannot be undone. This will permanently delete the comment."
+                                trigger={
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                                        aria-label={`Delete comment by ${comment.user.username}`}
+                                    >
+                                        <Trash2 />
+                                    </Button>
+                                }
+                            />
                         )}
                     </article>
                 );

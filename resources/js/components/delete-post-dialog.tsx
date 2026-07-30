@@ -17,10 +17,19 @@ export default function DeletePostDialog({
     onConfirm,
     processing = false,
     trigger,
+    title = 'Delete this post?',
+    description = (
+        <>
+            This action cannot be undone. This will permanently delete the post
+            and all of its associated data.
+        </>
+    ),
 }: {
     onConfirm: () => void;
     processing?: boolean;
     trigger?: ReactNode;
+    title?: ReactNode;
+    description?: ReactNode;
 }) {
     const [open, setOpen] = useState(false);
 
@@ -34,12 +43,9 @@ export default function DeletePostDialog({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>Delete this post?</DialogTitle>
-                <DialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    the post and all of its associated data.
-                </DialogDescription>
+            <DialogContent className="z-[60]">
+                <DialogTitle>{title}</DialogTitle>
+                <DialogDescription>{description}</DialogDescription>
 
                 <DialogFooter className="gap-2">
                     <DialogClose asChild>

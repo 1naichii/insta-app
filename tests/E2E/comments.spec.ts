@@ -35,6 +35,8 @@ test('a user can delete their own comment', async ({ page }) => {
             name: `Delete comment by ${demoUser.username}`,
         })
         .click();
+    await expect(page.getByText('Delete this comment?')).toBeVisible();
+    await page.getByRole('button', { name: 'Confirm delete' }).click();
 
     await expect(page.locator('p').filter({ hasText: comment })).toHaveCount(0);
 });
