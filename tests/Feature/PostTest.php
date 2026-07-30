@@ -196,6 +196,29 @@ test('the feed lists posts newest first', function () {
     );
 });
 
+test('the feed returns six posts per page', function () {
+    $user = User::factory()->create();
+    Post::factory()->count(7)->create();
+
+    $response = $this->actingAs($user)->get(route('posts.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('posts.data', 6)
+        ->where('posts.per_page', 6)
+        ->where('posts.next_page_url', route('posts.index', ['page' => 2]))
+    );
+});
+
+test('the feed uses three database queries regardless of page size', function () {
+    $user = User::factory()->create();
+    Post::factory()->count(7)->create();
+
+    $this->expectsDatabaseQueryCount(3);
+
+    $this->actingAs($user)->get(route('posts.index'))->assertOk();
+});
+
 test('the feed uses origin-relative URLs for public images', function () {
     $user = User::factory()->create(['avatar' => 'avatars/profile.jpg']);
     Post::factory()->for($user)->create(['image_path' => 'posts/photo.jpg']);

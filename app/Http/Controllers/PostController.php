@@ -29,7 +29,7 @@ class PostController extends Controller
             ->withExists([
                 'likes as liked_by_user' => fn ($query) => $query->where('user_id', $userId),
             ])
-            ->paginate(12)
+            ->paginate(6)
             ->through(fn (Post $post) => PostSerializer::post($post));
 
         return Inertia::render('posts/index', [
