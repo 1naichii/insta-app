@@ -181,7 +181,3 @@ export default function ProfileShow({ profile, posts }: Props) {
         </>
     );
 }
-
-ProfileShow.layout = {
-    breadcrumbs: [{ title: 'Feed', href: index() }],
-};

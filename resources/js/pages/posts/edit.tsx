@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { index, show, update } from '@/routes/posts';
+import { show, update } from '@/routes/posts';
 import type { Post } from '@/types';
 
 const MAX_CAPTION_LENGTH = 2200;
@@ -113,10 +113,3 @@ export default function EditPost({ post }: Props) {
         </>
     );
 }
-
-EditPost.layout = {
-    breadcrumbs: [
-        { title: 'Feed', href: index() },
-        { title: 'Edit post', href: index() },
-    ],
-};

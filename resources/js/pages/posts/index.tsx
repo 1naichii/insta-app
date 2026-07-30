@@ -6,7 +6,7 @@ import PostCard from '@/components/post-card';
 import PostLikeButton from '@/components/post-like-button';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { create, index } from '@/routes/posts';
+import { create } from '@/routes/posts';
 import type { Paginated, Post } from '@/types';
 
 type Props = {
@@ -98,7 +98,3 @@ export default function PostsIndex({ posts }: Props) {
         </>
     );
 }
-
-PostsIndex.layout = {
-    breadcrumbs: [{ title: 'Feed', href: index() }],
-};

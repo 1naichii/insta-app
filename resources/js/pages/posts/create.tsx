@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { create, index, store } from '@/routes/posts';
+import { index, store } from '@/routes/posts';
 
 const MAX_CAPTION_LENGTH = 2200;
 
@@ -91,10 +91,3 @@ export default function CreatePost() {
         </>
     );
 }
-
-CreatePost.layout = {
-    breadcrumbs: [
-        { title: 'Feed', href: index() },
-        { title: 'New post', href: create() },
-    ],
-};

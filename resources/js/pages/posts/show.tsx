@@ -118,10 +118,3 @@ export default function PostsShow({ post, comments }: Props) {
         </>
     );
 }
-
-PostsShow.layout = {
-    breadcrumbs: [
-        { title: 'Feed', href: index() },
-        { title: 'Post', href: index() },
-    ],
-};
