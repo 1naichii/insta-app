@@ -5,12 +5,13 @@ InstaApp is a full-stack social photo-sharing application built with Laravel and
 ## Features
 
 - Registration, authentication, email verification, two-factor authentication, and passkeys
-- Image posts with optional captions
+- Image posts with optional captions that keep their line breaks, collapsing behind a see-more control when long
 - Chronological post feed that loads more posts as you scroll
-- Post editing and deletion for post owners
-- Likes with one like per user and post
-- Comments in a desktop modal or mobile bottom sheet, with author-only deletion
-- Public user profiles addressed by username, with grids that load more posts as you scroll
+- Post editing and deletion for post owners, returning to the page the action started from
+- Likes with one like per user and post, recorded without re-rendering the page, and on mobile also by double tapping a photo
+- Comments in a desktop modal or mobile bottom sheet, appearing before the request completes and asking for confirmation before an author deletes one
+- Public user profiles addressed by username, with grids that load more posts as you scroll and open into a scrollable post list on mobile
+- Settings split across its own screens on mobile and a two-column layout on desktop
 - Seeded demo content with locally generated placeholder images
 
 ## Tech stack
@@ -28,6 +29,8 @@ InstaApp is a full-stack social photo-sharing application built with Laravel and
 | Pest                     | 5.0     |
 | Vitest                   | 4.1     |
 | Playwright               | 1.62    |
+
+The React Compiler runs during the build through `@vitejs/plugin-react` 6.0.4 and `babel-plugin-react-compiler` 1.0. Its output is verifiable in the built assets rather than assumed: `grep -rl "react.memo_cache_sentinel" public/build/assets/` matches the compiled chunks.
 
 PostgreSQL is the required database. PHP must have the `pdo_pgsql` and `pgsql` extensions enabled. The `gd` extension is also required because the database seeder generates placeholder JPEG images locally.
 
@@ -71,7 +74,7 @@ On PowerShell, replace `cp .env.example .env` with `Copy-Item .env.example .env`
 
 ## Tests
 
-The current suite contains 126 Pest tests, 70 Vitest tests, and 15 Playwright scenarios.
+The current suite contains 136 Pest tests, 134 Vitest tests, and 32 Playwright scenarios.
 
 Prepare the backend test environment before running Pest:
 
@@ -91,7 +94,9 @@ bun run test:react:coverage   # React coverage
 bun run test:e2e              # End-to-end
 ```
 
-React coverage enforces minimum thresholds of 70% for statements, functions, and lines, and 60% for branches. After `bun run test:react:coverage`, open `coverage/index.html` locally to view the HTML report. No current coverage percentages are quoted here because they have not been independently recorded for this README.
+React coverage enforces minimum thresholds of 70% for statements, functions, and lines, and 60% for branches. The suite currently reports 88.86% statements, 79.19% branches, 89.85% functions, and 95.29% lines. After `bun run test:react:coverage`, open `coverage/index.html` locally to view the HTML report.
+
+Read those percentages with one caveat. Because the React Compiler transforms components before instrumentation, coverage measures compiled output, and a share of the counted branches are compiler-generated cache checks rather than authored code. The denominators are roughly three times what they were before the compiler was enabled, so these figures are not comparable to older ones and do not map directly onto how thoroughly the source is exercised.
 
 Prepare Playwright's isolated environment and built assets before running the end-to-end suite:
 
