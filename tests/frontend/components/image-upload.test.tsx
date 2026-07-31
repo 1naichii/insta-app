@@ -187,6 +187,7 @@ describe('ImageUpload', () => {
         expect(
             screen.getByRole('img', { name: /selected image preview/i }),
         ).toHaveAttribute('src', 'blob:preview');
+        expect(createObjectURL).toHaveBeenCalledTimes(1);
         await user.click(
             screen.getByRole('button', { name: /remove selected image/i }),
         );

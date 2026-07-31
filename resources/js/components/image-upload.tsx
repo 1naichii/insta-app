@@ -1,6 +1,6 @@
 import { Upload, X } from 'lucide-react';
 import type { ChangeEvent, DragEvent } from 'react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import PostImage from '@/components/post-image';
 import { Button } from '@/components/ui/button';
@@ -49,18 +49,22 @@ export default function ImageUpload({
     const [clientError, setClientError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
 
-    const preview = useMemo(
-        () => (value ? createPreviewUrl(value) : null),
-        [value],
-    );
+    const [preview, setPreview] = useState<string | null>(null);
 
+    /* eslint-disable react-hooks/set-state-in-effect -- This effect must own the object URL and its preview state. */
     useEffect(() => {
-        if (!preview) {
+        if (!value) {
+            setPreview(null);
+
             return;
         }
 
-        return () => revokePreviewUrl(preview);
-    }, [preview]);
+        const url = createPreviewUrl(value);
+        setPreview(url);
+
+        return () => revokePreviewUrl(url);
+    }, [value]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     function acceptFile(file: File | null) {
         if (!file) {
