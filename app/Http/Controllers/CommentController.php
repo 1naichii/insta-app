@@ -13,6 +13,8 @@ use Inertia\Inertia;
 
 class CommentController extends Controller
 {
+    private const MAX_COMMENTS_PER_POST = 100;
+
     /**
      * List the specified post's comments, oldest first, for the comments modal/sheet.
      */
@@ -21,6 +23,7 @@ class CommentController extends Controller
         $comments = $post->comments()
             ->oldest()
             ->with('user')
+            ->limit(self::MAX_COMMENTS_PER_POST)
             ->get();
 
         return response()->json([
