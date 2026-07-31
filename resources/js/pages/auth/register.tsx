@@ -32,7 +32,6 @@ export default function Register({ passwordRules }: Props) {
                                 type="text"
                                 required
                                 autoFocus
-                                tabIndex={1}
                                 autoComplete="name"
                                 name="name"
                                 placeholder="Full name"
@@ -47,7 +46,6 @@ export default function Register({ passwordRules }: Props) {
                                 id="username"
                                 type="text"
                                 required
-                                tabIndex={2}
                                 autoComplete="username"
                                 name="username"
                                 placeholder="username"
@@ -62,7 +60,6 @@ export default function Register({ passwordRules }: Props) {
                                 id="email"
                                 type="email"
                                 required
-                                tabIndex={3}
                                 autoComplete="email"
                                 name="email"
                                 placeholder="email@example.com"
@@ -76,7 +73,6 @@ export default function Register({ passwordRules }: Props) {
                             <PasswordInput
                                 id="password"
                                 required
-                                tabIndex={4}
                                 autoComplete="new-password"
                                 name="password"
                                 placeholder="Password"
@@ -93,7 +89,6 @@ export default function Register({ passwordRules }: Props) {
                             <PasswordInput
                                 id="password_confirmation"
                                 required
-                                tabIndex={5}
                                 autoComplete="new-password"
                                 name="password_confirmation"
                                 placeholder="Confirm password"
@@ -108,7 +103,6 @@ export default function Register({ passwordRules }: Props) {
                         <Button
                             type="submit"
                             className="mt-2 h-10 w-full"
-                            tabIndex={6}
                             data-test="register-user-button"
                         >
                             {processing && <Spinner />}
@@ -127,7 +121,7 @@ Register.layout = {
     footer: (
         <p>
             Already have an account?{' '}
-            <TextLink href={login()} tabIndex={7} className="font-semibold">
+            <TextLink href={login()} className="font-semibold">
                 Log in
             </TextLink>
         </p>

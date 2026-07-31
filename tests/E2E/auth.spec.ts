@@ -29,6 +29,29 @@ test('a user can log in', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Feed' })).toBeVisible();
 });
 
+test('the login controls follow the natural focus order', async ({ page }) => {
+    await page.goto('/login');
+
+    const focusOrder = [
+        page.getByRole('link', { name: 'InstaApp' }),
+        page.getByRole('button', { name: 'Sign in with a passkey' }),
+        page.getByLabel('Email address'),
+        page.getByRole('link', { name: 'Forgot your password?' }),
+        page.getByLabel('Password', { exact: true }),
+        page.getByRole('checkbox', { name: 'Remember me' }),
+        page.getByRole('button', { name: 'Log in' }),
+        page.getByRole('link', { name: 'Sign up' }),
+    ];
+
+    await focusOrder[0].focus();
+    await expect(focusOrder[0]).toBeFocused();
+
+    for (const control of focusOrder.slice(1)) {
+        await page.keyboard.press('Tab');
+        await expect(control).toBeFocused();
+    }
+});
+
 test('a user can log out', async ({ page }) => {
     await login(page);
 

@@ -39,7 +39,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                 name="email"
                                 required
                                 autoFocus
-                                tabIndex={1}
                                 autoComplete="email"
                                 placeholder="email@example.com"
                                 className="h-10 bg-background"
@@ -54,7 +53,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                     <TextLink
                                         href={request()}
                                         className="ml-auto text-sm"
-                                        tabIndex={5}
                                     >
                                         Forgot your password?
                                     </TextLink>
@@ -64,7 +62,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                 id="password"
                                 name="password"
                                 required
-                                tabIndex={2}
                                 autoComplete="current-password"
                                 placeholder="Password"
                                 className="h-10 bg-background"
@@ -73,18 +70,13 @@ export default function Login({ status, canResetPassword }: Props) {
                         </div>
 
                         <div className="flex items-center space-x-3">
-                            <Checkbox
-                                id="remember"
-                                name="remember"
-                                tabIndex={3}
-                            />
+                            <Checkbox id="remember" name="remember" />
                             <Label htmlFor="remember">Remember me</Label>
                         </div>
 
                         <Button
                             type="submit"
                             className="mt-2 h-10 w-full"
-                            tabIndex={4}
                             disabled={processing}
                             data-test="login-button"
                         >
@@ -110,7 +102,7 @@ Login.layout = {
     footer: (
         <p>
             Don't have an account?{' '}
-            <TextLink href={register()} tabIndex={5} className="font-semibold">
+            <TextLink href={register()} className="font-semibold">
                 Sign up
             </TextLink>
         </p>
