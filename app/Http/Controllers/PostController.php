@@ -101,8 +101,6 @@ class PostController extends Controller
      */
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse
     {
-        Gate::authorize('update', $post);
-
         $previousImagePath = $post->image_path;
         $newImagePath = null;
 
