@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProfileUpdateTest extends TestCase
@@ -21,6 +23,13 @@ class ProfileUpdateTest extends TestCase
             ->get(route('profile.edit'));
 
         $response->assertOk();
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.id', $user->id)
+            ->missing('auth.user.password')
+            ->missing('auth.user.created_at')
+            ->missing('auth.user.updated_at'),
+        );
     }
 
     public function test_profile_information_can_be_updated()
@@ -335,5 +344,42 @@ class ProfileUpdateTest extends TestCase
 
         $response->assertSessionHasErrors('avatar');
         $this->assertNull($user->refresh()->avatar);
+    }
+
+    public function test_an_avatar_with_excessive_dimensions_is_rejected()
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $file = UploadedFile::fake()->image('wide-avatar.jpg', 4097, 100);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'avatar' => $file,
+            ]);
+
+        $response->assertSessionHasErrors('avatar');
+        $this->assertNull($user->refresh()->avatar);
+    }
+
+    public function test_deleting_an_account_removes_profile_and_post_media()
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create(['avatar' => 'avatars/profile.jpg']);
+        $post = Post::factory()->for($user)->create(['image_path' => 'posts/photo.jpg']);
+        Storage::disk('public')->put($user->avatar, 'avatar');
+        Storage::disk('public')->put($post->image_path, 'post');
+
+        $response = $this
+            ->actingAs($user)
+            ->delete(route('profile.destroy'), ['password' => 'password']);
+
+        $response->assertRedirect(route('home'));
+        Storage::disk('public')->assertMissing(['avatars/profile.jpg', 'posts/photo.jpg']);
     }
 }

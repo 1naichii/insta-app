@@ -170,6 +170,17 @@ test('the comments endpoint exposes comments oldest first', function () {
         ->assertJsonPath('comments.0.user.id', $older->user_id);
 });
 
+test('the comments endpoint bounds the number of returned comments', function () {
+    $viewer = User::factory()->create();
+    $post = Post::factory()->create();
+    Comment::factory()->count(101)->for($post)->create();
+
+    $this->actingAs($viewer)
+        ->getJson(route('posts.comments.index', $post))
+        ->assertOk()
+        ->assertJsonCount(100, 'comments');
+});
+
 test('the comments endpoint marks can.delete true for the author and false for others', function () {
     $author = User::factory()->create();
     $otherUser = User::factory()->create();

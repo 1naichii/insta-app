@@ -39,6 +39,21 @@ class SecurityTest extends TestCase
             );
     }
 
+    public function test_security_headers_are_present()
+    {
+        $response = $this->get(route('login'));
+
+        $response->assertOk();
+        expect($response->headers->get('Content-Security-Policy'))
+            ->toContain("default-src 'self'")
+            ->and($response->headers->get('X-Content-Type-Options'))
+            ->toBe('nosniff')
+            ->and($response->headers->get('X-Frame-Options'))
+            ->toBe('SAMEORIGIN')
+            ->and($response->headers->get('Referrer-Policy'))
+            ->toBe('strict-origin-when-cross-origin');
+    }
+
     public function test_security_page_requires_password_confirmation_when_enabled()
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
@@ -96,6 +111,32 @@ class SecurityTest extends TestCase
             ->assertRedirect(route('security.edit'));
 
         $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
+    }
+
+    public function test_password_change_invalidates_a_session_with_an_old_password_hash()
+    {
+        $user = User::factory()->create();
+        $oldPasswordHash = $user->getAuthPassword();
+
+        $this
+            ->actingAs($user)
+            ->get(route('posts.index'))
+            ->assertOk();
+
+        $this
+            ->actingAs($user)
+            ->put(route('user-password.update'), [
+                'current_password' => 'password',
+                'password' => 'new-password',
+                'password_confirmation' => 'new-password',
+            ])
+            ->assertRedirect();
+
+        $this
+            ->actingAs($user)
+            ->withSession(['password_hash_web' => $oldPasswordHash])
+            ->get(route('posts.index'))
+            ->assertRedirect(route('login'));
     }
 
     public function test_correct_password_must_be_provided_to_update_password()
