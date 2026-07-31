@@ -170,6 +170,7 @@ describe('PostModal', () => {
         expect(screen.getAllByTestId('comments-skeleton')).toHaveLength(12);
         expect(fetch).toHaveBeenCalledWith('/posts/7/comments', {
             headers: { Accept: 'application/json' },
+            signal: expect.any(AbortSignal),
         });
         expect(
             screen.getByRole('form', { name: 'Comment form for post 7' }),
@@ -215,6 +216,88 @@ describe('PostModal', () => {
 
         expect(
             screen.queryByText('An optimistic comment'),
+        ).not.toBeInTheDocument();
+    });
+
+    it("does not replace a new post's comments with a late refresh", async () => {
+        const user = userEvent.setup();
+        const postB = { ...post, id: 8, caption: 'A second post' };
+        const commentA = { ...comment, body: 'Comment from post A' };
+        const commentB = { ...comment, id: 5, body: 'Comment from post B' };
+        let resolvePostARefresh: (response: Response) => void = () => undefined;
+        let resolvePostBRequest: (response: Response) => void = () => undefined;
+
+        vi.mocked(fetch)
+            .mockResolvedValueOnce(responseWithComments([]))
+            .mockReturnValueOnce(
+                new Promise((resolve) => {
+                    resolvePostARefresh = resolve;
+                }),
+            )
+            .mockReturnValueOnce(
+                new Promise((resolve) => {
+                    resolvePostBRequest = resolve;
+                }),
+            );
+
+        const { rerender } = render(
+            <PostModal post={post} open onOpenChange={vi.fn()} />,
+        );
+        await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+        await user.click(screen.getByRole('button', { name: 'Post comment' }));
+
+        act(() => commentFormMock.lifecycle?.onSuccess?.());
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+        rerender(<PostModal post={postB} open onOpenChange={vi.fn()} />);
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+
+        resolvePostBRequest(responseWithComments([commentB]));
+        expect(await screen.findByText(commentB.body)).toBeInTheDocument();
+
+        await act(async () => {
+            resolvePostARefresh(responseWithComments([commentA]));
+            await Promise.resolve();
+        });
+
+        expect(screen.queryByText(commentA.body)).not.toBeInTheDocument();
+        expect(screen.getByText(commentB.body)).toBeInTheDocument();
+    });
+
+    it('does not show a load error when a comments request is aborted', async () => {
+        const user = userEvent.setup();
+        let rejectRefresh: (reason: DOMException) => void = () => undefined;
+        let refreshSignal: AbortSignal | undefined;
+        vi.mocked(fetch)
+            .mockResolvedValueOnce(responseWithComments([]))
+            .mockImplementationOnce((_input, init) => {
+                refreshSignal = init?.signal ?? undefined;
+
+                return new Promise((_resolve, reject) => {
+                    rejectRefresh = reject;
+                });
+            })
+            .mockReturnValueOnce(new Promise(() => undefined));
+
+        const { rerender } = render(
+            <PostModal post={post} open onOpenChange={vi.fn()} />,
+        );
+        await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+        await user.click(screen.getByRole('button', { name: 'Post comment' }));
+        act(() => commentFormMock.lifecycle?.onSuccess?.());
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+        rerender(<PostModal post={post} open={false} onOpenChange={vi.fn()} />);
+        expect(refreshSignal?.aborted).toBe(true);
+        rerender(<PostModal post={post} open onOpenChange={vi.fn()} />);
+
+        await act(async () => {
+            rejectRefresh(new DOMException('Aborted', 'AbortError'));
+            await Promise.resolve();
+        });
+
+        expect(
+            screen.queryByText("Couldn't load comments."),
         ).not.toBeInTheDocument();
     });
 

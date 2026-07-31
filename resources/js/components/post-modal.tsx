@@ -34,9 +34,13 @@ import { index as indexComments } from '@/routes/posts/comments';
 import { show as showProfile } from '@/routes/profile';
 import type { Comment, Post } from '@/types';
 
-function fetchComments(postId: number): Promise<Comment[]> {
+function fetchComments(
+    postId: number,
+    signal: AbortSignal,
+): Promise<Comment[]> {
     return fetch(indexComments(postId).url, {
         headers: { Accept: 'application/json' },
+        signal,
     })
         .then((response) => {
             if (!response.ok) {
@@ -167,6 +171,7 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
     const [optimisticComments, setOptimisticComments] = useState<Comment[]>([]);
     const [loadError, setLoadError] = useState(false);
     const optimisticCommentId = useRef(-1);
+    const commentsRequest = useRef<AbortController | null>(null);
 
     // No comments loaded yet and no error means a fetch is either about to
     // start or already in flight - derived instead of tracked separately, so
@@ -197,18 +202,38 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
     // `.then`/`.catch` callback rather than synchronously in the effect
     // body.
     const loadComments = useCallback(() => {
+        commentsRequest.current?.abort();
+        const controller = new AbortController();
+        commentsRequest.current = controller;
         setLoadError(false);
 
-        return fetchComments(post.id)
+        return fetchComments(post.id, controller.signal)
             .then((data) => {
+                if (controller.signal.aborted) {
+                    return false;
+                }
+
                 setComments(data);
 
                 return true;
             })
-            .catch(() => {
+            .catch((error: unknown) => {
+                if (
+                    controller.signal.aborted ||
+                    (error instanceof DOMException &&
+                        error.name === 'AbortError')
+                ) {
+                    return false;
+                }
+
                 setLoadError(true);
 
                 return false;
+            })
+            .finally(() => {
+                if (commentsRequest.current === controller) {
+                    commentsRequest.current = null;
+                }
             });
     }, [post.id]);
 
@@ -262,21 +287,38 @@ export default function PostModal({ post, open, onOpenChange }: Props) {
         }
 
         let cancelled = false;
+        commentsRequest.current?.abort();
+        const controller = new AbortController();
+        commentsRequest.current = controller;
 
-        fetchComments(post.id)
+        fetchComments(post.id, controller.signal)
             .then((data) => {
-                if (!cancelled) {
+                if (!cancelled && !controller.signal.aborted) {
                     setComments(data);
                 }
             })
-            .catch(() => {
-                if (!cancelled) {
+            .catch((error: unknown) => {
+                if (
+                    !cancelled &&
+                    !controller.signal.aborted &&
+                    !(
+                        error instanceof DOMException &&
+                        error.name === 'AbortError'
+                    )
+                ) {
                     setLoadError(true);
+                }
+            })
+            .finally(() => {
+                if (commentsRequest.current === controller) {
+                    commentsRequest.current = null;
                 }
             });
 
         return () => {
             cancelled = true;
+            commentsRequest.current?.abort();
+            commentsRequest.current = null;
         };
     }, [open, post.id]);
 

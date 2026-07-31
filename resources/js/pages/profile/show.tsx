@@ -248,6 +248,7 @@ export default function ProfileShow({ profile, posts }: Props) {
 
             {selectedPost && !isMobile && (
                 <PostModal
+                    key={selectedPost.id}
                     post={selectedPost}
                     open={modalOpen}
                     onOpenChange={setModalOpen}
