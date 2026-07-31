@@ -46,4 +46,23 @@ describe('PostImage', () => {
             screen.getByText('A day by the sea. Photo unavailable.'),
         ).toBeInTheDocument();
     });
+
+    it('renders a new photo after the previous source fails', () => {
+        const { rerender } = render(
+            <PostImage src={src} alt="A day by the sea" />,
+        );
+
+        fireEvent.error(screen.getByRole('img', { name: 'A day by the sea' }));
+
+        expect(
+            screen.getByText('A day by the sea. Photo unavailable.'),
+        ).toBeInTheDocument();
+
+        const replacementSrc = 'https://example.test/mountains.jpg';
+        rerender(<PostImage src={replacementSrc} alt="Mountain view" />);
+
+        expect(
+            screen.getByRole('img', { name: 'Mountain view' }),
+        ).toHaveAttribute('src', replacementSrc);
+    });
 });

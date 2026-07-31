@@ -11,6 +11,12 @@ type Props = {
 
 export default function PostImage({ src, alt, className, loading }: Props) {
     const [failed, setFailed] = useState(false);
+    const [previousSrc, setPreviousSrc] = useState(src);
+
+    if (src !== previousSrc) {
+        setPreviousSrc(src);
+        setFailed(false);
+    }
 
     // A post whose file has gone missing otherwise renders the browser's
     // broken-image glyph, which looks like a layout bug and says nothing.
