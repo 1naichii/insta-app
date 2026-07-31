@@ -173,6 +173,25 @@ test('the post modal closes without a close button', async ({ page }) => {
     await expect(dialog).not.toBeVisible();
 });
 
+test('closing a desktop profile post keeps the grid after narrowing', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await login(page);
+    await page.goto('/@demo');
+    const profilePost = page.locator('main').getByRole('button').first();
+
+    await profilePost.click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+
+    await page.setViewportSize({ width: 414, height: 896 });
+
+    await expect(profilePost).toBeVisible();
+    await expect(page.getByRole('article')).toHaveCount(0);
+});
+
 test('editing a post from a profile returns to that profile', async ({
     page,
 }) => {

@@ -34,8 +34,23 @@ vi.mock('@/components/post-like-button', () => ({
 }));
 
 vi.mock('@/components/post-modal', () => ({
-    default: ({ open, post }: { open: boolean; post: Post }) =>
-        open ? <div role="dialog">Dialog post {post.caption}</div> : null,
+    default: ({
+        open,
+        post,
+        onOpenChange,
+    }: {
+        open: boolean;
+        post: Post;
+        onOpenChange: (open: boolean) => void;
+    }) =>
+        open ? (
+            <div role="dialog">
+                Dialog post {post.caption}
+                <button type="button" onClick={() => onOpenChange(false)}>
+                    Dismiss dialog
+                </button>
+            </div>
+        ) : null,
 }));
 
 vi.mock('@/hooks/use-mobile', () => ({
@@ -122,6 +137,53 @@ describe('ProfileShow', () => {
         expect(screen.getByRole('dialog')).toHaveTextContent(
             'Dialog post Tapped post',
         );
+        expect(
+            screen.queryByText('List post Tapped post'),
+        ).not.toBeInTheDocument();
+    });
+
+    it('keeps the grid after a closed desktop dialog is narrowed', async () => {
+        const user = userEvent.setup();
+        const view = render(<ProfileShow profile={profile} posts={posts} />);
+
+        await user.click(screen.getByRole('button', { name: /^Tapped post/ }));
+        await user.click(
+            screen.getByRole('button', { name: 'Dismiss dialog' }),
+        );
+        viewport.isMobile = true;
+        view.rerender(<ProfileShow profile={profile} posts={posts} />);
+
+        expect(
+            screen.getByRole('button', { name: /^Tapped post/ }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText('List post Tapped post'),
+        ).not.toBeInTheDocument();
+    });
+
+    it('returns an open mobile post list to the grid when widened', async () => {
+        viewport.isMobile = true;
+        const user = userEvent.setup();
+        const view = render(<ProfileShow profile={profile} posts={posts} />);
+
+        await user.click(screen.getByRole('button', { name: /^Tapped post/ }));
+        viewport.isMobile = false;
+        view.rerender(<ProfileShow profile={profile} posts={posts} />);
+
+        expect(
+            screen.getByRole('button', { name: /^Tapped post/ }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText('List post Tapped post'),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+        viewport.isMobile = true;
+        view.rerender(<ProfileShow profile={profile} posts={posts} />);
+
+        expect(
+            screen.getByRole('button', { name: /^Tapped post/ }),
+        ).toBeInTheDocument();
         expect(
             screen.queryByText('List post Tapped post'),
         ).not.toBeInTheDocument();

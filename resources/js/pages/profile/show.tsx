@@ -28,6 +28,11 @@ type Props = {
     posts: Paginated<Post>;
 };
 
+type PostSelection = {
+    id: number;
+    surface: 'desktop-modal' | 'mobile-list';
+};
+
 function ProfilePost({ post, onOpen }: { post: Post; onOpen: () => void }) {
     const { likesCount } = usePostLikeState(post);
 
@@ -65,20 +70,27 @@ function ProfilePost({ post, onOpen }: { post: Post; onOpen: () => void }) {
     );
 }
 
-export default function ProfileShow({ profile, posts }: Props) {
+function ProfileContent({
+    profile,
+    posts,
+    isMobile,
+}: Props & { isMobile: boolean }) {
     const getInitials = useInitials();
-    const isMobile = useIsMobile();
-    const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const selectedPost = posts.data.find((post) => post.id === selectedPostId);
+    const [postSelection, setPostSelection] = useState<PostSelection | null>(
+        null,
+    );
+    const selectedPost = posts.data.find(
+        (post) => post.id === postSelection?.id,
+    );
     const selectedPostIndex = posts.data.findIndex(
-        (post) => post.id === selectedPostId,
+        (post) => post.id === postSelection?.id,
     );
     const mobilePosts =
         selectedPostIndex === -1
             ? posts.data
             : posts.data.slice(selectedPostIndex);
-    const isMobilePostList = isMobile && selectedPost !== undefined;
+    const isMobilePostList =
+        postSelection?.surface === 'mobile-list' && selectedPost !== undefined;
     useLikesRevision();
     const likesReceivedCount =
         profile.likes_received_count +
@@ -107,7 +119,7 @@ export default function ProfileShow({ profile, posts }: Props) {
                                 variant="ghost"
                                 size="icon"
                                 aria-label="Back"
-                                onClick={() => setSelectedPostId(null)}
+                                onClick={() => setPostSelection(null)}
                             >
                                 <ArrowLeft />
                             </Button>
@@ -232,11 +244,12 @@ export default function ProfileShow({ profile, posts }: Props) {
                                         key={post.id}
                                         post={post}
                                         onOpen={() => {
-                                            setSelectedPostId(post.id);
-
-                                            if (!isMobile) {
-                                                setModalOpen(true);
-                                            }
+                                            setPostSelection({
+                                                id: post.id,
+                                                surface: isMobile
+                                                    ? 'mobile-list'
+                                                    : 'desktop-modal',
+                                            });
                                         }}
                                     />
                                 ))}
@@ -246,14 +259,32 @@ export default function ProfileShow({ profile, posts }: Props) {
                 )}
             </div>
 
-            {selectedPost && !isMobile && (
+            {selectedPost && postSelection?.surface === 'desktop-modal' && (
                 <PostModal
                     key={selectedPost.id}
                     post={selectedPost}
-                    open={modalOpen}
-                    onOpenChange={setModalOpen}
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setPostSelection(null);
+                        }
+                    }}
                 />
             )}
         </>
+    );
+}
+
+export default function ProfileShow(props: Props) {
+    const isMobile = useIsMobile();
+
+    // Crossing the breakpoint abandons either post surface and returns to the
+    // grid, so a mobile list never becomes a modal or a closed modal a list.
+    return (
+        <ProfileContent
+            key={isMobile ? 'mobile' : 'desktop'}
+            {...props}
+            isMobile={isMobile}
+        />
     );
 }
