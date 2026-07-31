@@ -24,6 +24,24 @@ test('the settings index routes sections on mobile', async ({ page }) => {
     await expect(settingsNavigation).toBeVisible();
 });
 
+test('the mobile account panel closes when settings opens', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 414, height: 896 });
+    await page.goto('/feed');
+
+    await page.getByRole('button', { name: 'Demo User', exact: true }).click();
+    const accountPanel = page.getByRole('dialog', { name: 'Account' });
+    await expect(accountPanel).toBeVisible();
+    await accountPanel.getByRole('link', { name: 'Settings' }).click();
+
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(accountPanel).toBeHidden();
+    await expect(
+        page.getByRole('navigation', { name: 'Settings' }),
+    ).toBeVisible();
+});
+
 test('the desktop settings content keeps the same horizontal geometry', async ({
     page,
 }) => {
@@ -70,8 +88,14 @@ test('the mobile account panel logs the user out', async ({ page }) => {
     await page.goto('/feed');
 
     await page.getByRole('button', { name: 'Demo User', exact: true }).click();
-    await expect(page.getByRole('dialog', { name: 'Account' })).toBeVisible();
-    await page.getByText('Log out', { exact: true }).click();
+    const accountPanel = page.getByRole('dialog', { name: 'Account' });
+    await expect(accountPanel).toBeVisible();
+    await accountPanel.getByRole('button', { name: 'Log out' }).click();
+    await expect(accountPanel).toBeHidden();
+
+    const confirmation = page.getByRole('dialog', { name: 'Log out?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Log out' }).click();
 
     await expect(page).toHaveURL(/\/login$/);
 });

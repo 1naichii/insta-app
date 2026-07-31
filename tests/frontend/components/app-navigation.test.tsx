@@ -39,6 +39,10 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => page,
 }));
 
+vi.mock('@/components/logout-confirmation-dialog', () => ({
+    default: () => null,
+}));
+
 describe.each([
     ['navigation rail', AppNavRail],
     ['navigation dock', AppNavDock],

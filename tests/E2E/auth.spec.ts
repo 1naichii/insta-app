@@ -41,6 +41,15 @@ test('a user can log out', async ({ page }) => {
     await page.getByRole('button', { name: 'Demo User', exact: true }).click();
     await page.getByText('Log out', { exact: true }).click();
 
+    const confirmation = page.getByRole('dialog', { name: 'Log out?' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page).toHaveURL(/\/feed$/);
+
+    await page.getByRole('button', { name: 'Demo User', exact: true }).click();
+    await page.getByText('Log out', { exact: true }).click();
+    await confirmation.getByRole('button', { name: 'Log out' }).click();
+
     await expect(page).toHaveURL(/\/login$/);
 });
 

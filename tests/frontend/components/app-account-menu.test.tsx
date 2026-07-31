@@ -99,6 +99,15 @@ vi.mock('@/components/ui/sheet', () => ({
     SheetTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('@/components/logout-confirmation-dialog', () => ({
+    default: ({ open }: { open: boolean }) =>
+        open ? (
+            <div role="dialog" aria-label="Log out?">
+                Confirm logout
+            </div>
+        ) : null,
+}));
+
 vi.mock('@/hooks/use-mobile', () => ({
     useIsMobile: () => viewport.isMobile,
 }));
@@ -109,6 +118,7 @@ vi.mock('@/hooks/use-mobile-navigation', () => ({
 
 beforeEach(() => {
     viewport.isMobile = false;
+    cleanup.mockReset();
     page.props.auth.user = {
         id: 2,
         name: 'Ada Lovelace',
@@ -156,6 +166,30 @@ it('opens mobile account actions with settings and logout', async () => {
         '/settings',
     );
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
+});
+
+it('asks for confirmation before logging out on desktop', async () => {
+    const user = userEvent.setup();
+    render(<AppAccountMenu />);
+
+    await user.click(screen.getByRole('button', { name: 'Log out' }));
+
+    expect(
+        screen.getByRole('dialog', { name: 'Log out?' }),
+    ).toBeInTheDocument();
+});
+
+it('asks for confirmation before logging out on mobile', async () => {
+    const user = userEvent.setup();
+    viewport.isMobile = true;
+    render(<AppAccountMenu />);
+
+    await user.click(screen.getByRole('button', { name: 'Log out' }));
+
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(
+        screen.getByRole('dialog', { name: 'Log out?' }),
+    ).toBeInTheDocument();
 });
 
 it('renders nothing without an authenticated user', () => {

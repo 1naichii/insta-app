@@ -24,6 +24,10 @@ test('like state does not survive a change of user', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Demo User', exact: true }).click();
     await page.getByText('Log out', { exact: true }).click();
+    await page
+        .getByRole('dialog', { name: 'Log out?' })
+        .getByRole('button', { name: 'Log out' })
+        .click();
     await expect(page).toHaveURL(/\/login$/);
     await login(page, sarahUser.email);
 

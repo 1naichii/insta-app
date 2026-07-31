@@ -1,5 +1,7 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { LogOut, Menu, Settings } from 'lucide-react';
+import { useState } from 'react';
+import LogoutConfirmationDialog from '@/components/logout-confirmation-dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,7 +19,6 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { cn } from '@/lib/utils';
-import { logout } from '@/routes';
 import { index as settingsIndex } from '@/routes/settings';
 
 type AppAccountMenuProps = {
@@ -42,15 +43,23 @@ export function AppAccountMenu({
     const { auth } = usePage().props;
     const isMobile = useIsMobile();
     const cleanup = useMobileNavigation();
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [logoutOpen, setLogoutOpen] = useState(false);
 
     if (!auth.user) {
         return null;
     }
 
     const { user } = auth;
-    const handleLogout = () => {
+    const handleSettings = () => {
+        setMobileOpen(false);
         cleanup();
-        router.flushAll();
+    };
+
+    const handleLogoutRequest = () => {
+        setMobileOpen(false);
+        setLogoutOpen(true);
+        cleanup();
     };
 
     const trigger = (
@@ -76,62 +85,80 @@ export function AppAccountMenu({
 
     if (isMobile) {
         return (
-            <Sheet>
-                <SheetTrigger asChild>{trigger}</SheetTrigger>
-                <SheetContent
-                    side="right"
-                    className="w-[280px] gap-0 p-0 sm:max-w-[280px]"
-                >
-                    <SheetDescription className="sr-only">
-                        View account details, open settings, or log out.
-                    </SheetDescription>
+            <>
+                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                    <SheetTrigger asChild>{trigger}</SheetTrigger>
+                    <SheetContent
+                        side="right"
+                        className="w-[280px] gap-0 p-0 sm:max-w-[280px]"
+                    >
+                        <SheetDescription className="sr-only">
+                            View account details, open settings, or log out.
+                        </SheetDescription>
 
-                    <div className="border-b border-border p-4">
-                        <SheetTitle className="mb-4">Account</SheetTitle>
-                        <div className="flex items-center gap-3">
-                            <UserInfo user={user} showEmail />
+                        <div className="border-b border-border p-4">
+                            <SheetTitle className="mb-4">Account</SheetTitle>
+                            <div className="flex items-center gap-3">
+                                <UserInfo user={user} showEmail />
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="flex flex-col gap-1 p-3">
-                        <Link
-                            href={settingsIndex()}
-                            className="flex items-center gap-3 rounded-md p-2.5 text-foreground hover:bg-sidebar-accent"
-                            onClick={cleanup}
-                        >
-                            <Settings className="size-5 shrink-0" />
-                            <span className="text-sm font-medium">
-                                Settings
-                            </span>
-                        </Link>
-                        <Link
-                            href={logout()}
-                            as="button"
-                            className="flex w-full items-center gap-3 rounded-md p-2.5 text-foreground hover:bg-sidebar-accent"
-                            onClick={handleLogout}
-                            data-test="logout-button"
-                        >
-                            <LogOut className="size-5 shrink-0" />
-                            <span className="text-sm font-medium">Log out</span>
-                        </Link>
-                    </div>
-                </SheetContent>
-            </Sheet>
+                        <div className="flex flex-col gap-1 p-3">
+                            <Link
+                                href={settingsIndex()}
+                                className="flex items-center gap-3 rounded-md p-2.5 text-foreground hover:bg-sidebar-accent"
+                                onClick={handleSettings}
+                            >
+                                <Settings className="size-5 shrink-0" />
+                                <span className="text-sm font-medium">
+                                    Settings
+                                </span>
+                            </Link>
+                            <button
+                                type="button"
+                                className="flex w-full items-center gap-3 rounded-md p-2.5 text-foreground hover:bg-sidebar-accent"
+                                onClick={handleLogoutRequest}
+                                data-test="logout-button"
+                            >
+                                <LogOut className="size-5 shrink-0" />
+                                <span className="text-sm font-medium">
+                                    Log out
+                                </span>
+                            </button>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+
+                <LogoutConfirmationDialog
+                    open={logoutOpen}
+                    onOpenChange={setLogoutOpen}
+                />
+            </>
         );
     }
 
     return (
-        <DropdownMenu onOpenChange={onOpenChange}>
-            <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-            <DropdownMenuContent
-                className="w-64 rounded-xl p-1.5"
-                align="start"
-                side="top"
-                sideOffset={8}
-            >
-                <UserMenuContent user={user} />
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+            <DropdownMenu onOpenChange={onOpenChange}>
+                <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+                <DropdownMenuContent
+                    className="w-64 rounded-xl p-1.5"
+                    align="start"
+                    side="top"
+                    sideOffset={8}
+                >
+                    <UserMenuContent
+                        user={user}
+                        onLogout={handleLogoutRequest}
+                    />
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <LogoutConfirmationDialog
+                open={logoutOpen}
+                onOpenChange={setLogoutOpen}
+            />
+        </>
     );
 }
 
