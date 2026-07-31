@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -79,6 +80,35 @@ class PasswordResetTest extends TestCase
         });
     }
 
+    public function test_password_reset_invalidates_a_session_with_an_old_password_hash()
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $oldPasswordHash = $user->getAuthPassword();
+
+        $this->post(route('password.email'), ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user, $oldPasswordHash) {
+            $this->post(route('password.update'), [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'new-password',
+                'password_confirmation' => 'new-password',
+            ])->assertRedirect(route('login'));
+
+            $user->refresh();
+
+            $this
+                ->actingAs($user)
+                ->withSession(['password_hash_web' => $oldPasswordHash])
+                ->get(route('posts.index'))
+                ->assertRedirect(route('login'));
+
+            return true;
+        });
+    }
+
     public function test_password_cannot_be_reset_with_invalid_token(): void
     {
         $user = User::factory()->create();
@@ -135,5 +165,16 @@ class PasswordResetTest extends TestCase
 
             return true;
         });
+    }
+
+    public function test_password_reset_requests_are_rate_limited_by_ip()
+    {
+        RateLimiter::clear('password-reset:127.0.0.1');
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $this->post(route('password.email'), [])->assertSessionHasErrors();
+        }
+
+        $this->post(route('password.email'), [])->assertTooManyRequests();
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -144,6 +145,43 @@ test('oversized image is rejected', function () {
 
     $response->assertSessionHasErrors('image');
     expect(Post::count())->toBe(0);
+});
+
+test('an image with excessive dimensions is rejected', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $file = UploadedFile::fake()->image('wide-photo.jpg', 4097, 100);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('posts.store'), [
+            'image' => $file,
+        ]);
+
+    $response->assertSessionHasErrors('image');
+    expect(Post::count())->toBe(0);
+});
+
+test('post writes are rate limited per user', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    RateLimiter::clear('posts:'.$user->id);
+
+    for ($attempt = 0; $attempt < 10; $attempt++) {
+        $this->actingAs($user)
+            ->post(route('posts.store'), [
+                'image' => UploadedFile::fake()->image("photo-{$attempt}.jpg"),
+            ])
+            ->assertRedirect(route('posts.index'));
+    }
+
+    $this->actingAs($user)
+        ->post(route('posts.store'), [
+            'image' => UploadedFile::fake()->image('blocked.jpg'),
+        ])
+        ->assertTooManyRequests();
 });
 
 test('image at the two megabyte limit is accepted', function () {

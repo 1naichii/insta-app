@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -84,10 +85,23 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+        $mediaPaths = array_values(array_filter([
+            $user->avatar,
+            ...$user->posts()->pluck('image_path')->all(),
+        ]));
 
         Auth::logout();
 
-        $user->delete();
+        DB::transaction(function () use ($user): void {
+            $user->delete();
+        });
+
+        if ($mediaPaths !== [] && ! Storage::disk('public')->delete($mediaPaths)) {
+            Log::warning('Failed to delete account media.', [
+                'user_id' => $user->getKey(),
+                'media_count' => count($mediaPaths),
+            ]);
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

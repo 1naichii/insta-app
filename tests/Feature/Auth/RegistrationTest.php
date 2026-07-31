@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -185,5 +186,16 @@ class RegistrationTest extends TestCase
         $response->assertSessionHasErrors('password');
         $this->assertGuest();
         $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_requests_are_rate_limited_by_ip()
+    {
+        RateLimiter::clear('registration:127.0.0.1');
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->post(route('register.store'), [])->assertSessionHasErrors();
+        }
+
+        $this->post(route('register.store'), [])->assertTooManyRequests();
     }
 }

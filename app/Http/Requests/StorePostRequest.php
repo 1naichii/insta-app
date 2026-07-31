@@ -24,7 +24,13 @@ class StorePostRequest extends FormRequest
     {
         return [
             'caption' => ['nullable', 'string', 'max:2200'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'image' => [
+                'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'dimensions:max_width=4096,max_height=4096',
+                'max:2048',
+            ],
         ];
     }
 }
