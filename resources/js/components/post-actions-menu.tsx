@@ -19,18 +19,27 @@ type Props = {
 
 export default function PostActionsMenu({ post }: Props) {
     const [processing, setProcessing] = useState(false);
+    const [deleteError, setDeleteError] = useState<string>();
 
     if (!post.can.update && !post.can.delete) {
         return null;
     }
 
     function handleDelete() {
+        setDeleteError(undefined);
         setProcessing(true);
 
         router.delete(destroy(post.id).url, {
             preserveScroll: true,
+            onError: reportDeleteFailure,
+            onHttpException: reportDeleteFailure,
+            onNetworkError: reportDeleteFailure,
             onFinish: () => setProcessing(false),
         });
+    }
+
+    function reportDeleteFailure() {
+        setDeleteError('The post could not be deleted. Please try again.');
     }
 
     return (
@@ -68,6 +77,7 @@ export default function PostActionsMenu({ post }: Props) {
                     <DeletePostDialog
                         onConfirm={handleDelete}
                         processing={processing}
+                        error={deleteError}
                         trigger={
                             <DropdownMenuItem
                                 variant="destructive"

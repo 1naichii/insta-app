@@ -1,6 +1,7 @@
 import { Trash2Icon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -16,6 +17,7 @@ import { Spinner } from '@/components/ui/spinner';
 export default function DeletePostDialog({
     onConfirm,
     processing = false,
+    error,
     trigger,
     title = 'Delete this post?',
     description = (
@@ -27,6 +29,7 @@ export default function DeletePostDialog({
 }: {
     onConfirm: () => void;
     processing?: boolean;
+    error?: string;
     trigger?: ReactNode;
     title?: ReactNode;
     description?: ReactNode;
@@ -46,6 +49,7 @@ export default function DeletePostDialog({
             <DialogContent className="z-[60]">
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
+                <InputError message={error} role="alert" />
 
                 <DialogFooter className="gap-2">
                     <DialogClose asChild>

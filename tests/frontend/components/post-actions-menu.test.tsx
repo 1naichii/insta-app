@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import PostActionsMenu from '@/components/post-actions-menu';
@@ -106,6 +106,39 @@ describe('PostActionsMenu', () => {
 
         expect(routerDelete).toHaveBeenCalledOnce();
         expect(routerDelete.mock.calls[0][0]).toContain(String(post.id));
+    });
+
+    it('reports a failed deletion and allows another attempt', async () => {
+        const user = userEvent.setup();
+        render(
+            <PostActionsMenu
+                post={{ ...post, can: { update: true, delete: true } }}
+            />,
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Post options' }));
+        await user.click(screen.getByRole('menuitem', { name: 'Delete post' }));
+        await user.click(
+            screen.getByRole('button', { name: 'Confirm delete' }),
+        );
+
+        const options = routerDelete.mock.calls[0][1] as {
+            onFinish: () => void;
+            onNetworkError: () => void;
+        };
+
+        act(() => {
+            options.onNetworkError();
+            options.onFinish();
+        });
+
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            'The post could not be deleted. Please try again.',
+        );
+        expect(
+            screen.getByRole('button', { name: 'Confirm delete' }),
+        ).toBeEnabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
     });
 
     it('does not delete the post when the dialog is cancelled', async () => {
