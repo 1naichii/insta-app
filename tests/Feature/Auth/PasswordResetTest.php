@@ -92,4 +92,48 @@ class PasswordResetTest extends TestCase
 
         $response->assertSessionHasErrors('email');
     }
+
+    public function test_password_reset_rejects_a_short_password()
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        $this->post(route('password.email'), ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+            $response = $this->post(route('password.update'), [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'short',
+                'password_confirmation' => 'short',
+            ]);
+
+            $response->assertSessionHasErrors('password');
+
+            return true;
+        });
+    }
+
+    public function test_password_reset_requires_matching_confirmation()
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        $this->post(route('password.email'), ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+            $response = $this->post(route('password.update'), [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'new-password',
+                'password_confirmation' => 'different-password',
+            ]);
+
+            $response->assertSessionHasErrors('password');
+
+            return true;
+        });
+    }
 }

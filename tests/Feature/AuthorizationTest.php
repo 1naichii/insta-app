@@ -3,6 +3,7 @@
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -24,6 +25,24 @@ test('user cannot update another user\'s post', function () {
     $response->assertForbidden();
 
     expect($post->refresh()->caption)->not->toBe('Hijacked caption');
+});
+
+test('post update authorization runs before validation', function () {
+    Storage::fake('public');
+
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $post = Post::factory()->for($owner)->create();
+
+    $response = $this
+        ->actingAs($otherUser)
+        ->patch(route('posts.update', $post), [
+            'caption' => str_repeat('a', 2201),
+            'image' => UploadedFile::fake()->create('document.txt', 10, 'text/plain'),
+        ]);
+
+    $response->assertForbidden()->assertSessionHasNoErrors();
+    expect($post->refresh()->caption)->not->toBe(str_repeat('a', 2201));
 });
 
 test('user cannot delete another user\'s post', function () {

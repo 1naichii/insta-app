@@ -351,6 +351,54 @@ test('owner can update only the caption without re-uploading an image', function
     Storage::disk('public')->assertExists($originalImagePath);
 });
 
+test('post update rejects a caption longer than 2200 characters', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create(['caption' => 'Keep me']);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'caption' => str_repeat('a', 2201),
+        ]);
+
+    $response->assertSessionHasErrors('caption');
+    expect($post->refresh()->caption)->toBe('Keep me');
+});
+
+test('post update rejects an invalid image type', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'image' => UploadedFile::fake()->create('document.txt', 10, 'text/plain'),
+        ]);
+
+    $response->assertSessionHasErrors('image');
+    expect($post->refresh()->image_path)->not->toBeNull();
+});
+
+test('post update rejects an image over two megabytes', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $post = Post::factory()->for($user)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('posts.update', $post), [
+            'image' => UploadedFile::fake()->create('photo.jpg', 2049, 'image/jpeg'),
+        ]);
+
+    $response->assertSessionHasErrors('image');
+    expect($post->refresh()->image_path)->not->toBeNull();
+});
+
 test('replacing the image deletes the previous file from disk', function () {
     Storage::fake('public');
 
