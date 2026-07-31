@@ -41,7 +41,7 @@ describe('image validation', () => {
             validateImage(
                 imageFile('image/jpeg', MAX_IMAGE_SIZE_KB * 1024 + 1),
             ),
-        ).toBe('Image must be smaller than 5MB.');
+        ).toBe('Image must be 2MB or smaller.');
     });
 });
 

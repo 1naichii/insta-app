@@ -134,7 +134,7 @@ test('oversized image is rejected', function () {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $file = UploadedFile::fake()->create('photo.jpg', 6000, 'image/jpeg');
+    $file = UploadedFile::fake()->create('photo.jpg', 2049, 'image/jpeg');
 
     $response = $this
         ->actingAs($user)
@@ -144,6 +144,22 @@ test('oversized image is rejected', function () {
 
     $response->assertSessionHasErrors('image');
     expect(Post::count())->toBe(0);
+});
+
+test('image at the two megabyte limit is accepted', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $file = UploadedFile::fake()->image('photo.jpg')->size(2048);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('posts.store'), [
+            'image' => $file,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    expect(Post::count())->toBe(1);
 });
 
 test('caption is optional', function () {

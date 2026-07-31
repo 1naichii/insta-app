@@ -64,7 +64,7 @@ describe('ImageUpload', () => {
 
         expect(onChange).toHaveBeenCalledWith(file);
         expect(
-            screen.getByText(/JPEG, PNG, WEBP images up to 5MB/i),
+            screen.getByText(/JPEG, PNG, WEBP images up to 2MB/i),
         ).toBeInTheDocument();
     });
 

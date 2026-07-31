@@ -24,7 +24,7 @@ class UpdatePostRequest extends FormRequest
     {
         return [
             'caption' => ['nullable', 'string', 'max:2200'],
-            'image' => ['sometimes', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image' => ['sometimes', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

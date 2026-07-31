@@ -1,5 +1,5 @@
-/** Maximum accepted image size, in kilobytes (mirrors the backend `max:5120` rule). */
-export const MAX_IMAGE_SIZE_KB = 5120;
+/** Maximum accepted image size, in kilobytes (mirrors PHP and backend upload limits). */
+export const MAX_IMAGE_SIZE_KB = 2048;
 
 /** MIME types accepted for post images (mirrors the backend `mimes:jpg,jpeg,png,webp` rule). */
 export const ACCEPTED_IMAGE_TYPES = [
@@ -29,7 +29,7 @@ export function validateImage(file: File): string | null {
     }
 
     if (!validateImageSize(file)) {
-        return `Image must be smaller than ${MAX_IMAGE_SIZE_KB / 1024}MB.`;
+        return `Image must be ${MAX_IMAGE_SIZE_KB / 1024}MB or smaller.`;
     }
 
     return null;
