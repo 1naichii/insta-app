@@ -22,7 +22,7 @@ export default defineConfig({
     webServer: {
         command: 'php artisan serve --env=e2e --host=127.0.0.1 --port=8000',
         url: 'http://127.0.0.1:8000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 120_000,
     },
 });
