@@ -14,26 +14,68 @@ type LikeResponse = {
     likes_count: number;
 };
 
-const states = new Map<number, LikeState>();
+type LikeEntry = {
+    state: LikeState;
+    sources: WeakSet<Post>;
+};
+
+const states = new Map<number, LikeEntry>();
 const listeners = new Map<number, Set<() => void>>();
 const allListeners = new Set<() => void>();
 let revision = 0;
+let storeUserId: number | null | undefined;
+
+function stateFrom(post: Post): LikeState {
+    return {
+        liked: post.liked_by_user,
+        likesCount: post.likes_count,
+        processing: false,
+    };
+}
+
+export function setLikeStoreUser(userId: number | null) {
+    if (storeUserId === userId) {
+        return;
+    }
+
+    storeUserId = userId;
+    states.clear();
+    revision += 1;
+}
 
 function stateFor(post: Post): LikeState {
     const existing = states.get(post.id);
 
     if (existing) {
-        return existing;
+        if (!existing.sources.has(post)) {
+            existing.sources.add(post);
+
+            // A new Post object represents fresh server props. It wins unless
+            // an optimistic request is still responsible for the live state.
+            if (!existing.state.processing) {
+                existing.state = stateFrom(post);
+            }
+        }
+
+        return existing.state;
     }
 
-    const initial = {
-        liked: post.liked_by_user,
-        likesCount: post.likes_count,
-        processing: false,
-    };
-    states.set(post.id, initial);
+    const initial = stateFrom(post);
+    states.set(post.id, {
+        state: initial,
+        sources: new WeakSet([post]),
+    });
 
     return initial;
+}
+
+function entryFor(postId: number, state: LikeState): LikeEntry {
+    return (
+        states.get(postId) ?? {
+            state,
+            sources: new WeakSet(),
+        }
+    );
 }
 
 export function postLikeState(post: Post) {
@@ -41,7 +83,9 @@ export function postLikeState(post: Post) {
 }
 
 function publish(postId: number, state: LikeState) {
-    states.set(postId, state);
+    const entry = entryFor(postId, state);
+    entry.state = state;
+    states.set(postId, entry);
     revision += 1;
     listeners.get(postId)?.forEach((listener) => listener());
     allListeners.forEach((listener) => listener());
@@ -54,6 +98,10 @@ function subscribe(postId: number, listener: () => void) {
 
     return () => {
         postListeners.delete(listener);
+
+        if (postListeners.size === 0) {
+            listeners.delete(postId);
+        }
     };
 }
 
@@ -114,7 +162,7 @@ export function useOptimisticLike(post: Post) {
             onFinish: () => {
                 processingRef.current = false;
                 publish(post.id, {
-                    ...(states.get(post.id) ?? previous),
+                    ...(states.get(post.id)?.state ?? previous),
                     processing: false,
                 });
             },

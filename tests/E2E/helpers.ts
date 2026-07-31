@@ -22,7 +22,10 @@ export async function login(page: Page, email = demoUser.email) {
         }
     }
 
-    await page.goto('/login');
+    if (!page.url().endsWith('/login')) {
+        await page.goto('/login');
+    }
+
     await page.getByLabel('Email address').fill(email);
     await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Log in' }).click();

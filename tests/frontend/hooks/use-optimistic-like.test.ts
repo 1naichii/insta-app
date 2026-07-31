@@ -1,5 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
-import { useOptimisticLike } from '@/hooks/use-optimistic-like';
+import {
+    setLikeStoreUser,
+    useOptimisticLike,
+} from '@/hooks/use-optimistic-like';
 import type { Post } from '@/types';
 
 const httpMock = vi.hoisted(() => ({
@@ -26,7 +29,10 @@ const post: Post = {
     can: { update: false, delete: false },
 };
 
+let userId = 100;
+
 beforeEach(() => {
+    setLikeStoreUser(userId++);
     httpMock.delete.mockReset().mockReturnValue(new Promise(() => undefined));
     httpMock.post.mockReset().mockReturnValue(new Promise(() => undefined));
 });
@@ -89,9 +95,10 @@ describe('useOptimisticLike', () => {
 
     it('propagates the state to another rendering of the same post', () => {
         const sharedPost = { ...post, id: 10 };
+        const secondRenderingPost = { ...sharedPost };
         const { result } = renderHook(() => ({
             first: useOptimisticLike(sharedPost),
-            second: useOptimisticLike({ ...sharedPost }),
+            second: useOptimisticLike(secondRenderingPost),
         }));
 
         act(() => result.current.first.toggle());
@@ -99,6 +106,48 @@ describe('useOptimisticLike', () => {
         expect(result.current.second.liked).toBe(true);
         expect(result.current.second.likesCount).toBe(11);
         expect(result.current.second.processing).toBe(true);
+    });
+
+    it('reconciles cached state from fresh server props', () => {
+        const stalePost = { ...post, id: 12 };
+        const { result, rerender } = renderHook(
+            ({ currentPost }: { currentPost: Post }) =>
+                useOptimisticLike(currentPost),
+            { initialProps: { currentPost: stalePost } },
+        );
+
+        expect(result.current.liked).toBe(false);
+        expect(result.current.likesCount).toBe(10);
+
+        rerender({
+            currentPost: {
+                ...stalePost,
+                liked_by_user: true,
+                likes_count: 14,
+            },
+        });
+
+        expect(result.current.liked).toBe(true);
+        expect(result.current.likesCount).toBe(14);
+    });
+
+    it('does not retain state when the authenticated user changes', () => {
+        const sharedPost = { ...post, id: 13 };
+        const firstUser = renderHook(() => useOptimisticLike(sharedPost));
+        act(() => firstUser.result.current.toggle());
+
+        expect(firstUser.result.current.liked).toBe(true);
+        expect(firstUser.result.current.likesCount).toBe(11);
+
+        firstUser.unmount();
+        setLikeStoreUser(userId++);
+
+        const secondUser = renderHook(() =>
+            useOptimisticLike({ ...sharedPost }),
+        );
+        expect(secondUser.result.current.liked).toBe(false);
+        expect(secondUser.result.current.likesCount).toBe(10);
+        expect(secondUser.result.current.processing).toBe(false);
     });
 
     it('optimistically removes an existing like', () => {
