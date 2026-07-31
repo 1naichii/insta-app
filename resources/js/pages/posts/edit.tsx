@@ -88,7 +88,9 @@ export default function EditPost({ post }: Props) {
                                     disabled={processing}
                                     data-test="update-post-button"
                                 >
-                                    {processing && <Spinner />}
+                                    {processing && (
+                                        <Spinner aria-hidden="true" />
+                                    )}
                                     Save changes
                                 </Button>
                             </CardFooter>

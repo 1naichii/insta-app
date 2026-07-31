@@ -76,7 +76,9 @@ export default function CreatePost() {
                                     disabled={processing}
                                     data-test="create-post-button"
                                 >
-                                    {processing && <Spinner />}
+                                    {processing && (
+                                        <Spinner aria-hidden="true" />
+                                    )}
                                     Share
                                 </Button>
                             </CardFooter>
