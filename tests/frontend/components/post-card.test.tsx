@@ -106,6 +106,17 @@ describe('PostCard', () => {
         expect(screen.queryByText('1.5K likes')).not.toBeInTheDocument();
     });
 
+    it('treats the fallback heart as decorative', () => {
+        const { container } = render(<PostCard post={post} />);
+        const fallback =
+            container.querySelector('.lucide-heart')?.parentElement;
+
+        expect(fallback).toHaveAttribute('aria-hidden', 'true');
+        expect(fallback).toHaveClass('cursor-default');
+        expect(fallback).not.toHaveClass('cursor-pointer');
+        expect(screen.queryByText('Like post')).not.toBeInTheDocument();
+    });
+
     it('opens the post modal when the comment control is activated', async () => {
         const user = userEvent.setup();
         render(<PostCard post={post} />);

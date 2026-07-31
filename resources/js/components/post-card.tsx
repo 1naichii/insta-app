@@ -133,13 +133,15 @@ export default function PostCard({
                 {/* Cancel the shared action padding so the first icon's optical edge aligns with the content column. */}
                 <div className="-ml-2 flex items-center gap-2">
                     {likeButton ?? (
-                        <span className={POST_ACTION_CLASS}>
+                        <span
+                            aria-hidden="true"
+                            className={cn(POST_ACTION_CLASS, 'cursor-default')}
+                        >
                             <Heart
                                 className={POST_ACTION_ICON_CLASS}
                                 strokeWidth={POST_ACTION_ICON_STROKE}
                                 aria-hidden="true"
                             />
-                            <span className="sr-only">Like post</span>
                         </span>
                     )}
                     <button

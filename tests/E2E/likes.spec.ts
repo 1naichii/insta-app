@@ -7,26 +7,30 @@ test('a user can like a post', async ({ page }) => {
     await createPost(page, caption);
     const post = postArticle(page, caption);
 
-    await post.getByRole('button', { name: 'Like post' }).click();
+    await post.getByRole('button', { name: 'Like post', exact: true }).click();
 
     await expect(
-        post.getByRole('button', { name: 'Unlike post' }),
+        post.getByRole('button', { name: 'Unlike post', exact: true }),
     ).toBeVisible();
     await expect(
-        post.getByRole('button', { name: 'Unlike post' }).getByText('1'),
+        post
+            .getByRole('button', { name: 'Unlike post', exact: true })
+            .getByText('1'),
     ).toBeVisible();
 
     await page.waitForTimeout(1_000);
 
     await expect(
-        post.getByRole('button', { name: 'Unlike post' }).getByText('1'),
+        post
+            .getByRole('button', { name: 'Unlike post', exact: true })
+            .getByText('1'),
     ).toBeVisible();
 
     await post.getByRole('button', { name: 'View comments' }).click();
     await expect(
         page
             .getByRole('dialog')
-            .getByRole('button', { name: 'Unlike post' })
+            .getByRole('button', { name: 'Unlike post', exact: true })
             .getByText('1'),
     ).toBeVisible();
 });
@@ -40,7 +44,10 @@ test('a mobile image double tap likes its post', async ({ page }) => {
 
     await post.getByRole('button', { name: caption, exact: true }).dblclick();
 
-    const unlikeButton = post.getByRole('button', { name: 'Unlike post' });
+    const unlikeButton = post.getByRole('button', {
+        name: 'Unlike post',
+        exact: true,
+    });
     await expect(unlikeButton).toBeVisible();
     await expect(unlikeButton.getByText('1')).toBeVisible();
 });
@@ -60,11 +67,17 @@ test('a like count stays updated in a profile post modal', async ({ page }) => {
         .getByRole('button')
         .filter({ has: page.getByRole('img', { name: caption }) });
     await profilePost.click();
-    const likeButton = page.getByRole('button', { name: 'Like post' });
+    const likeButton = page.getByRole('button', {
+        name: 'Like post',
+        exact: true,
+    });
 
     await likeButton.click();
 
-    const unlikeButton = page.getByRole('button', { name: 'Unlike post' });
+    const unlikeButton = page.getByRole('button', {
+        name: 'Unlike post',
+        exact: true,
+    });
     await expect(unlikeButton.getByText('1')).toBeVisible();
 
     await page.waitForTimeout(1_000);
@@ -80,7 +93,7 @@ test('a like count stays updated in a profile post modal', async ({ page }) => {
     await expect(
         page
             .getByRole('dialog')
-            .getByRole('button', { name: 'Unlike post' })
+            .getByRole('button', { name: 'Unlike post', exact: true })
             .getByText('1'),
     ).toBeVisible();
 });
@@ -90,11 +103,23 @@ test('a user can unlike a post', async ({ page }) => {
     const caption = uniqueValue('unlike-post');
     await createPost(page, caption);
     const post = postArticle(page, caption);
-    await post.getByRole('button', { name: 'Like post' }).click();
-    const unlikeButton = post.getByRole('button', { name: 'Unlike post' });
+    await post.getByRole('button', { name: 'Like post', exact: true }).click();
+    const unlikeButton = post.getByRole('button', {
+        name: 'Unlike post',
+        exact: true,
+    });
     await expect(unlikeButton).toBeVisible();
 
     await unlikeButton.click();
 
-    await expect(post.getByRole('button', { name: 'Like post' })).toBeVisible();
+    const likeButton = post.getByRole('button', {
+        name: 'Like post',
+        exact: true,
+    });
+    await expect(likeButton).toBeVisible();
+    await expect(likeButton.getByText('0')).toBeVisible();
+
+    await page.waitForTimeout(1_000);
+
+    await expect(likeButton.getByText('0')).toBeVisible();
 });

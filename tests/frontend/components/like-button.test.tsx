@@ -8,7 +8,7 @@ describe('LikeButton', () => {
         render(<LikeButton liked={false} likesCount={10} onToggle={vi.fn()} />);
 
         expect(
-            screen.getByRole('button', { name: /like post/i }),
+            screen.getByRole('button', { name: 'Like post' }),
         ).toHaveAttribute('aria-pressed', 'false');
         expect(screen.getByText('10')).toBeInTheDocument();
     });
@@ -17,7 +17,7 @@ describe('LikeButton', () => {
         render(<LikeButton liked likesCount={11} onToggle={vi.fn()} />);
 
         expect(
-            screen.getByRole('button', { name: /unlike post/i }),
+            screen.getByRole('button', { name: 'Unlike post' }),
         ).toHaveAttribute('aria-pressed', 'true');
     });
 
@@ -28,7 +28,7 @@ describe('LikeButton', () => {
             <LikeButton liked={false} likesCount={10} onToggle={onToggle} />,
         );
 
-        await user.click(screen.getByRole('button', { name: /like post/i }));
+        await user.click(screen.getByRole('button', { name: 'Like post' }));
 
         expect(onToggle).toHaveBeenCalledOnce();
     });
@@ -44,7 +44,7 @@ describe('LikeButton', () => {
         );
 
         expect(
-            screen.getByRole('button', { name: /like post/i }),
+            screen.getByRole('button', { name: 'Like post' }),
         ).toBeDisabled();
     });
 
@@ -69,7 +69,7 @@ describe('LikeButton', () => {
         }
 
         render(<RequestHarness />);
-        const button = screen.getByRole('button', { name: /like post/i });
+        const button = screen.getByRole('button', { name: 'Like post' });
 
         await user.click(button);
         await user.click(button);

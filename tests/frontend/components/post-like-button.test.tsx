@@ -44,7 +44,7 @@ describe('PostLikeButton', () => {
         render(<PostLikeButton post={post} />);
 
         expect(screen.getByText('10')).toBeInTheDocument();
-        await user.click(screen.getByRole('button', { name: /like post/i }));
+        await user.click(screen.getByRole('button', { name: 'Like post' }));
 
         expect(likeMock.toggle).toHaveBeenCalledOnce();
     });
@@ -56,7 +56,7 @@ describe('PostLikeButton', () => {
         render(<PostLikeButton post={post} />);
 
         expect(
-            screen.getByRole('button', { name: /unlike post/i }),
+            screen.getByRole('button', { name: 'Unlike post' }),
         ).toBeDisabled();
         expect(screen.getByText('11')).toBeInTheDocument();
     });
