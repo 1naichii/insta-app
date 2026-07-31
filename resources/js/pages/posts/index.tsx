@@ -24,7 +24,12 @@ export default function PostsIndex({ posts }: Props) {
                         Feed
                     </h1>
 
-                    <Button asChild size="icon" className="size-11">
+                    <Button
+                        asChild
+                        size="icon"
+                        variant="ghost"
+                        className="size-11 bg-transparent text-foreground shadow-none hover:bg-transparent"
+                    >
                         <Link href={create()}>
                             <Plus />
                             <span className="sr-only">New post</span>

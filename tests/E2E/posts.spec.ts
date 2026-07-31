@@ -76,6 +76,10 @@ test('the feed new post action is an accessible icon target', async ({
     expect(bounds).not.toBeNull();
     expect(bounds!.width).toBeGreaterThanOrEqual(44);
     expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    await expect(action).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+
+    await action.hover();
+    await expect(action).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 
     const label = action.locator('span', { hasText: 'New post' });
     await expect(label).toHaveCount(1);
