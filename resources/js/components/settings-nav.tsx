@@ -7,7 +7,7 @@ import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
-export const settingsNavItems: NavItem[] = [
+const settingsNavItems: NavItem[] = [
     {
         title: 'Profile',
         href: edit(),
