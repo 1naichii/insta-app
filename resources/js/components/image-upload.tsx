@@ -34,6 +34,30 @@ const ACCEPTED_LABEL = ACCEPTED_IMAGE_TYPES.map((type) =>
 
 const MAX_SIZE_MB = MAX_IMAGE_SIZE_KB / 1024;
 
+function SelectedImagePreview({
+    file,
+    alt,
+    className,
+}: {
+    file: File;
+    alt: string;
+    className: string;
+}) {
+    const imageRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+        const url = createPreviewUrl(file);
+
+        if (imageRef.current) {
+            imageRef.current.src = url;
+        }
+
+        return () => revokePreviewUrl(url);
+    }, [file]);
+
+    return <img ref={imageRef} alt={alt} className={className} />;
+}
+
 export default function ImageUpload({
     value,
     onChange,
@@ -48,23 +72,6 @@ export default function ImageUpload({
     const inputRef = useRef<HTMLInputElement>(null);
     const [clientError, setClientError] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
-
-    const [preview, setPreview] = useState<string | null>(null);
-
-    /* eslint-disable react-hooks/set-state-in-effect -- This effect must own the object URL and its preview state. */
-    useEffect(() => {
-        if (!value) {
-            setPreview(null);
-
-            return;
-        }
-
-        const url = createPreviewUrl(value);
-        setPreview(url);
-
-        return () => revokePreviewUrl(url);
-    }, [value]);
-    /* eslint-enable react-hooks/set-state-in-effect */
 
     function acceptFile(file: File | null) {
         if (!file) {
@@ -135,9 +142,15 @@ export default function ImageUpload({
             {displayName ? (
                 <div className="flex items-center gap-4">
                     <div className="size-16 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-                        {preview || currentImageUrl ? (
+                        {value ? (
+                            <SelectedImagePreview
+                                file={value}
+                                alt={displayName}
+                                className="size-full object-cover"
+                            />
+                        ) : currentImageUrl ? (
                             <img
-                                src={preview ?? currentImageUrl ?? undefined}
+                                src={currentImageUrl}
                                 alt={displayName}
                                 className="size-full object-cover"
                             />
@@ -180,18 +193,22 @@ export default function ImageUpload({
                 <>
                     <Label htmlFor={inputId}>Photo</Label>
 
-                    {preview || currentImageUrl ? (
+                    {value || currentImageUrl ? (
                         <div className="relative overflow-hidden rounded-lg border border-border">
-                            <PostImage
-                                src={preview ?? currentImageUrl ?? ''}
-                                alt={
-                                    preview
-                                        ? 'Selected image preview'
-                                        : 'Current post photo'
-                                }
-                                className="aspect-square w-full max-w-full object-cover"
-                            />
-                            {preview ? (
+                            {value ? (
+                                <SelectedImagePreview
+                                    file={value}
+                                    alt="Selected image preview"
+                                    className="aspect-square w-full max-w-full object-cover"
+                                />
+                            ) : (
+                                <PostImage
+                                    src={currentImageUrl ?? ''}
+                                    alt="Current post photo"
+                                    className="aspect-square w-full max-w-full object-cover"
+                                />
+                            )}
+                            {value ? (
                                 <Button
                                     type="button"
                                     variant="secondary"
