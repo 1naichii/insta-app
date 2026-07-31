@@ -34,6 +34,7 @@ export default function Register({ passwordRules }: Props) {
                                 autoFocus
                                 autoComplete="name"
                                 name="name"
+                                maxLength={255}
                                 placeholder="Full name"
                                 className="h-10 bg-background"
                             />
@@ -48,6 +49,7 @@ export default function Register({ passwordRules }: Props) {
                                 required
                                 autoComplete="username"
                                 name="username"
+                                maxLength={50}
                                 placeholder="username"
                                 className="h-10 bg-background"
                             />
@@ -62,6 +64,7 @@ export default function Register({ passwordRules }: Props) {
                                 required
                                 autoComplete="email"
                                 name="email"
+                                maxLength={255}
                                 placeholder="email@example.com"
                                 className="h-10 bg-background"
                             />

@@ -82,6 +82,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
                 <Input
                     id="passkey-name"
                     type="text"
+                    maxLength={255}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., MacBook Pro, iPhone"

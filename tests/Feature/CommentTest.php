@@ -43,6 +43,53 @@ test('comment body is required', function () {
     expect(Comment::count())->toBe(0);
 });
 
+test('comment body is required when it is missing', function () {
+    $user = User::factory()->create();
+    $post = Post::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('posts.comments.store', $post), []);
+
+    $response->assertSessionHasErrors('body');
+    expect(Comment::count())->toBe(0);
+});
+
+test('comment body must be a string', function () {
+    $user = User::factory()->create();
+    $post = Post::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('posts.comments.store', $post), [
+        'body' => ['not', 'a', 'string'],
+    ]);
+
+    $response->assertSessionHasErrors('body');
+    expect(Comment::count())->toBe(0);
+});
+
+test('comment body cannot contain only whitespace', function () {
+    $user = User::factory()->create();
+    $post = Post::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('posts.comments.store', $post), [
+        'body' => " \n\t ",
+    ]);
+
+    $response->assertSessionHasErrors('body');
+    expect(Comment::count())->toBe(0);
+});
+
+test('comment body at the 500 character limit is accepted', function () {
+    $user = User::factory()->create();
+    $post = Post::factory()->create();
+    $body = str_repeat('a', 500);
+
+    $response = $this->actingAs($user)->post(route('posts.comments.store', $post), [
+        'body' => $body,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    expect(Comment::first()->body)->toBe($body);
+});
+
 test('comment body longer than 500 characters is rejected', function () {
     $user = User::factory()->create();
     $post = Post::factory()->create();

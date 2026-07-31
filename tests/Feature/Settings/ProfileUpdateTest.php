@@ -46,6 +46,113 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_profile_required_fields_cannot_be_empty()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => '',
+                'username' => '',
+                'email' => '',
+            ]);
+
+        $response->assertSessionHasErrors(['name', 'username', 'email']);
+    }
+
+    public function test_profile_rejects_an_invalid_email()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => 'not-an-email',
+            ]);
+
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_profile_rejects_a_duplicate_email()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $otherUser->email,
+            ]);
+
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_profile_rejects_a_duplicate_username()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'username' => $otherUser->username,
+                'email' => $user->email,
+            ]);
+
+        $response->assertSessionHasErrors('username');
+    }
+
+    public function test_profile_rejects_an_invalid_username()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'username' => 'Invalid Username!',
+                'email' => $user->email,
+            ]);
+
+        $response->assertSessionHasErrors('username');
+    }
+
+    public function test_profile_rejects_a_name_longer_than_255_characters()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => str_repeat('a', 256),
+                'username' => $user->username,
+                'email' => $user->email,
+            ]);
+
+        $response->assertSessionHasErrors('name');
+    }
+
+    public function test_profile_rejects_an_email_longer_than_255_characters()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => str_repeat('a', 252).'@x.com',
+            ]);
+
+        $response->assertSessionHasErrors('email');
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
     {
         $user = User::factory()->create();

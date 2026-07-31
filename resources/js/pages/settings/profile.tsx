@@ -88,6 +88,7 @@ export default function Profile({
                                                 id="name"
                                                 defaultValue={auth.user.name}
                                                 name="name"
+                                                maxLength={255}
                                                 required
                                                 autoComplete="name"
                                                 placeholder="Full name"
@@ -107,6 +108,7 @@ export default function Profile({
                                                     auth.user.username
                                                 }
                                                 name="username"
+                                                maxLength={50}
                                                 required
                                                 autoComplete="username"
                                                 placeholder="Username"
@@ -127,6 +129,7 @@ export default function Profile({
                                                 type="email"
                                                 defaultValue={auth.user.email}
                                                 name="email"
+                                                maxLength={255}
                                                 required
                                                 autoComplete="email"
                                                 placeholder="Email address"

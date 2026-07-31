@@ -23,7 +23,7 @@ class StoreCommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'max:500'],
+            'body' => ['required', 'string', 'not_regex:/^\s*$/', 'max:500'],
         ];
     }
 }

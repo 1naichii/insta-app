@@ -97,6 +97,66 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseCount('users', 0);
     }
 
+    public function test_registration_rejects_an_invalid_email()
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'username' => 'testuser',
+            'email' => 'not-an-email',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_rejects_a_password_that_is_too_short()
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'username' => 'testuser',
+            'email' => 'test@example.com',
+            'password' => 'short',
+            'password_confirmation' => 'short',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_rejects_a_name_longer_than_255_characters()
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => str_repeat('a', 256),
+            'username' => 'testuser',
+            'email' => 'test@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('name');
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_rejects_an_email_longer_than_255_characters()
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'username' => 'testuser',
+            'email' => str_repeat('a', 252).'@x.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
     public function test_registration_rejects_a_username_longer_than_fifty_characters()
     {
         $response = $this->post(route('register.store'), [
