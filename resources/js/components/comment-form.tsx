@@ -20,9 +20,10 @@ type Props = {
 };
 
 export default function CommentForm({ postId, onCreated }: Props) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        body: '',
-    });
+    const { data, setData, transform, post, processing, errors, reset } =
+        useForm({
+            body: '',
+        });
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -34,6 +35,7 @@ export default function CommentForm({ postId, onCreated }: Props) {
         const body = data.body.trim();
         const lifecycle = onCreated?.(body);
 
+        transform((formData) => ({ ...formData, body }));
         post(store.url(postId), {
             preserveScroll: true,
             onError: () => lifecycle?.onError?.(),

@@ -8,6 +8,7 @@ const formMock = vi.hoisted(() => ({
     processing: false,
     post: vi.fn(),
     reset: vi.fn(),
+    submittedData: null as { body: string } | null,
 }));
 
 vi.mock('@inertiajs/react', async () => {
@@ -16,12 +17,23 @@ vi.mock('@inertiajs/react', async () => {
     return {
         useForm: (initialData: { body: string }) => {
             const [data, setDataState] = React.useState(initialData);
+            const transform = React.useRef(
+                (formData: { body: string }) => formData,
+            );
 
             return {
                 data,
                 setData: (key: 'body', value: string) =>
                     setDataState((current) => ({ ...current, [key]: value })),
-                post: formMock.post,
+                post: (url: string, options: object) => {
+                    formMock.submittedData = transform.current(data);
+                    formMock.post(url, options);
+                },
+                transform: (
+                    callback: (formData: { body: string }) => { body: string },
+                ) => {
+                    transform.current = callback;
+                },
                 processing: formMock.processing,
                 errors: formMock.errors,
                 reset: (key: 'body') => {
@@ -38,6 +50,7 @@ beforeEach(() => {
     formMock.processing = false;
     formMock.post.mockReset();
     formMock.reset.mockReset();
+    formMock.submittedData = null;
 });
 
 describe('CommentForm', () => {
@@ -112,6 +125,23 @@ describe('CommentForm', () => {
 
         expect(commit).toHaveBeenCalledOnce();
         expect(formMock.reset).toHaveBeenCalledWith('body');
+    });
+
+    it('submits the same trimmed body used for the optimistic comment', async () => {
+        const user = userEvent.setup();
+        const onCreated = vi.fn();
+        render(<CommentForm postId={42} onCreated={onCreated} />);
+
+        await user.type(
+            screen.getByRole('textbox', { name: /add a comment/i }),
+            '  A thoughtful comment  ',
+        );
+        await user.click(screen.getByRole('button', { name: /post comment/i }));
+
+        expect(formMock.submittedData).toEqual({
+            body: 'A thoughtful comment',
+        });
+        expect(onCreated).toHaveBeenCalledWith('A thoughtful comment');
     });
 
     it('announces a comment immediately and rolls it back on error', async () => {
