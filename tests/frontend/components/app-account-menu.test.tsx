@@ -133,7 +133,7 @@ beforeEach(() => {
 });
 
 it('renders the desktop trigger named by the display name', () => {
-    render(<AppAccountMenu />);
+    render(<AppAccountMenu surface="rail" />);
 
     expect(
         screen.getByRole('button', { name: 'Ada Lovelace' }),
@@ -141,7 +141,7 @@ it('renders the desktop trigger named by the display name', () => {
 });
 
 it('places the desktop account menu above the trigger', () => {
-    const { container } = render(<AppAccountMenu />);
+    const { container } = render(<AppAccountMenu surface="rail" />);
 
     expect(container.querySelector('[data-side]')).toHaveAttribute(
         'data-side',
@@ -157,7 +157,7 @@ it('opens mobile account actions with settings and logout', async () => {
     const user = userEvent.setup();
     viewport.isMobile = true;
 
-    render(<AppAccountMenu />);
+    render(<AppAccountMenu surface="dock" />);
     await user.click(screen.getByRole('button', { name: 'Ada Lovelace' }));
 
     expect(screen.getByRole('dialog', { name: 'Account' })).toBeInTheDocument();
@@ -170,7 +170,7 @@ it('opens mobile account actions with settings and logout', async () => {
 
 it('asks for confirmation before logging out on desktop', async () => {
     const user = userEvent.setup();
-    render(<AppAccountMenu />);
+    render(<AppAccountMenu surface="rail" />);
 
     await user.click(screen.getByRole('button', { name: 'Log out' }));
 
@@ -182,7 +182,7 @@ it('asks for confirmation before logging out on desktop', async () => {
 it('asks for confirmation before logging out on mobile', async () => {
     const user = userEvent.setup();
     viewport.isMobile = true;
-    render(<AppAccountMenu />);
+    render(<AppAccountMenu surface="dock" />);
 
     await user.click(screen.getByRole('button', { name: 'Log out' }));
 
@@ -195,7 +195,7 @@ it('asks for confirmation before logging out on mobile', async () => {
 it('renders nothing without an authenticated user', () => {
     page.props.auth.user = null;
 
-    const { container } = render(<AppAccountMenu />);
+    const { container } = render(<AppAccountMenu surface="rail" />);
 
     expect(container).toBeEmptyDOMElement();
 });

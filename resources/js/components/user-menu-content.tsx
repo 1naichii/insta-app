@@ -14,9 +14,10 @@ import type { User } from '@/types';
 type Props = {
     user: User;
     onLogout: () => void;
+    logoutTestHook: string;
 };
 
-export function UserMenuContent({ user, onLogout }: Props) {
+export function UserMenuContent({ user, onLogout, logoutTestHook }: Props) {
     const cleanup = useMobileNavigation();
 
     return (
@@ -46,7 +47,7 @@ export function UserMenuContent({ user, onLogout }: Props) {
                     type="button"
                     className="block w-full cursor-pointer"
                     onClick={onLogout}
-                    data-test="logout-button"
+                    data-test={logoutTestHook}
                 >
                     <LogOut className="mr-2" />
                     Log out

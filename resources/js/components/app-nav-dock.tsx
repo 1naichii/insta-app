@@ -83,7 +83,7 @@ export default function AppNavDock() {
                 </Avatar>
             </DockLink>
             <div className="flex flex-1 items-center justify-center p-3">
-                <AppAccountMenu />
+                <AppAccountMenu surface="dock" />
             </div>
         </nav>
     );

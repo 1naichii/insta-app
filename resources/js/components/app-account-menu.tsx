@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { index as settingsIndex } from '@/routes/settings';
 
 type AppAccountMenuProps = {
+    surface: 'dock' | 'rail';
     /**
      * When true, the user's display name is shown visibly next to the icon.
      * When false (default), the name is still present for accessibility
@@ -37,6 +38,7 @@ type AppAccountMenuProps = {
  * two avatars side by side read as a duplicated control.
  */
 export function AppAccountMenu({
+    surface,
     showLabel = false,
     onOpenChange,
 }: AppAccountMenuProps) {
@@ -45,6 +47,13 @@ export function AppAccountMenu({
     const cleanup = useMobileNavigation();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [logoutOpen, setLogoutOpen] = useState(false);
+    const isActiveSurface = isMobile ? surface === 'dock' : surface === 'rail';
+    const triggerTestHook = isActiveSurface
+        ? 'app-account-menu-trigger'
+        : `${surface}-app-account-menu-trigger`;
+    const logoutTestHook = isActiveSurface
+        ? 'logout-button'
+        : `${surface}-logout-button`;
 
     if (!auth.user) {
         return null;
@@ -65,7 +74,7 @@ export function AppAccountMenu({
     const trigger = (
         <button
             type="button"
-            data-test="app-account-menu-trigger"
+            data-test={triggerTestHook}
             className={cn(
                 'flex w-full items-center gap-3 rounded-md p-2.5 text-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-sidebar-accent',
                 !showLabel && 'justify-center',
@@ -118,7 +127,7 @@ export function AppAccountMenu({
                                 type="button"
                                 className="flex w-full items-center gap-3 rounded-md p-2.5 text-foreground hover:bg-sidebar-accent"
                                 onClick={handleLogoutRequest}
-                                data-test="logout-button"
+                                data-test={logoutTestHook}
                             >
                                 <LogOut className="size-5 shrink-0" />
                                 <span className="text-sm font-medium">
@@ -150,6 +159,7 @@ export function AppAccountMenu({
                     <UserMenuContent
                         user={user}
                         onLogout={handleLogoutRequest}
+                        logoutTestHook={logoutTestHook}
                     />
                 </DropdownMenuContent>
             </DropdownMenu>

@@ -110,7 +110,11 @@ export default function AppNavRail() {
             </div>
 
             <div className="px-3 py-3">
-                <AppAccountMenu showLabel onOpenChange={setAccountMenuOpen} />
+                <AppAccountMenu
+                    surface="rail"
+                    showLabel
+                    onOpenChange={setAccountMenuOpen}
+                />
             </div>
         </nav>
     );

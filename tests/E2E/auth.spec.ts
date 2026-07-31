@@ -100,6 +100,28 @@ test('the mobile account icon is centred in its dock cell', async ({
     expect(geometry.iconCenter).toBeCloseTo(349.125, 2);
 });
 
+test('the account menu hook identifies one trigger per viewport', async ({
+    page,
+}) => {
+    const unique = uniqueValue('hook-user');
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/register');
+    await page.getByLabel('Name', { exact: true }).fill('Hook User');
+    await page.getByLabel('Username').fill(unique.replaceAll('-', '_'));
+    await page.getByLabel('Email address').fill(`${unique}@instaapp.test`);
+    await page.getByLabel('Password', { exact: true }).fill('Password1!');
+    await page.getByLabel('Confirm password').fill('Password1!');
+    await page.getByRole('button', { name: 'Create account' }).click();
+    await expect(page.getByRole('heading', { name: 'Feed' })).toBeVisible();
+
+    const trigger = page.locator('[data-test="app-account-menu-trigger"]');
+    await expect(trigger).toHaveCount(1);
+
+    await page.setViewportSize({ width: 414, height: 896 });
+    await expect(trigger).toHaveCount(1);
+});
+
 test('the desktop navigation rail stays expanded with its account menu open', async ({
     page,
 }) => {
