@@ -96,7 +96,11 @@ function TwoFactorSetupStep({
                     </div>
 
                     <div className="flex w-full space-x-5">
-                        <Button className="w-full" onClick={onNextStep}>
+                        <Button
+                            type="button"
+                            className="w-full"
+                            onClick={onNextStep}
+                        >
                             {buttonText}
                         </Button>
                     </div>
@@ -118,11 +122,18 @@ function TwoFactorSetupStep({
                                 <>
                                     <input
                                         type="text"
+                                        aria-label="Setup key"
                                         readOnly
                                         value={manualSetupKey}
                                         className="h-full w-full bg-background p-3 text-foreground outline-none"
                                     />
                                     <button
+                                        type="button"
+                                        aria-label={
+                                            copiedText === manualSetupKey
+                                                ? 'Setup key copied'
+                                                : 'Copy setup key'
+                                        }
                                         onClick={() => copy(manualSetupKey)}
                                         className="border-l border-border px-3 hover:bg-muted"
                                     >
@@ -149,9 +160,11 @@ function TwoFactorVerificationStep({
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setTimeout(() => {
+        const timeoutId = window.setTimeout(() => {
             pinInputContainerRef.current?.querySelector('input')?.focus();
         }, 0);
+
+        return () => window.clearTimeout(timeoutId);
     }, []);
 
     return (
