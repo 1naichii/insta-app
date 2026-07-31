@@ -24,6 +24,10 @@ function isSmallerThanBreakpoint(): boolean {
 }
 
 function getServerSnapshot(): boolean {
+    // SSR cannot infer the viewport. This desktop fallback would mismatch on
+    // mobile because consumers choose different portal trees. Before enabling
+    // SSR, make those branches hydration-stable with CSS where possible or
+    // defer viewport switching until after hydration.
     return false;
 }
 
