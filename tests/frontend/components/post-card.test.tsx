@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps, ReactNode } from 'react';
 import PostCard from '@/components/post-card';
@@ -149,10 +149,14 @@ describe('PostCard', () => {
 
         fireEvent.click(media, { detail: 1 });
         fireEvent.click(media, { detail: 2 });
-        vi.runAllTimers();
 
         expect(likeMock.toggle).toHaveBeenCalledOnce();
+        expect(screen.getByTestId('like-burst')).toBeInTheDocument();
         expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
+
+        act(() => vi.advanceTimersByTime(700));
+
+        expect(screen.queryByTestId('like-burst')).not.toBeInTheDocument();
     });
 
     it('does not unlike an already-liked post after a mobile double tap', () => {
@@ -166,10 +170,12 @@ describe('PostCard', () => {
 
         fireEvent.click(media, { detail: 1 });
         fireEvent.click(media, { detail: 2 });
-        vi.runAllTimers();
 
         expect(likeMock.toggle).not.toHaveBeenCalled();
+        expect(screen.getByTestId('like-burst')).toBeInTheDocument();
         expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
+
+        act(() => vi.runAllTimers());
     });
 
     it('opens immediately when mobile media is keyboard activated', () => {
@@ -237,5 +243,14 @@ describe('PostCard', () => {
         expect(
             screen.queryByRole('button', { name: 'see more' }),
         ).not.toBeInTheDocument();
+        expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'see less' }));
+
+        expect(caption).toHaveClass('line-clamp-3');
+        expect(
+            screen.getByRole('button', { name: 'see more' }),
+        ).toBeInTheDocument();
+        expect(screen.queryByTestId('post-modal')).not.toBeInTheDocument();
     });
 });

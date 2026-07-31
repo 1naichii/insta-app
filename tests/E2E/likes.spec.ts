@@ -41,8 +41,12 @@ test('a mobile image double tap likes its post', async ({ page }) => {
     const caption = uniqueValue('double-tap-like');
     await createPost(page, caption);
     const post = postArticle(page, caption);
+    const likeBurst = post.getByTestId('like-burst');
+    const likeBurstAppeared = likeBurst.waitFor({ state: 'visible' });
 
     await post.getByRole('button', { name: caption, exact: true }).dblclick();
+    await likeBurstAppeared;
+    await expect(likeBurst).toBeHidden();
 
     const unlikeButton = post.getByRole('button', {
         name: 'Unlike post',

@@ -36,7 +36,9 @@ export default function PostCard({
     const { liked, toggle } = useOptimisticLike(post);
     const [modalOpen, setModalOpen] = useState(false);
     const [captionExpanded, setCaptionExpanded] = useState(false);
+    const [likeBurst, setLikeBurst] = useState(0);
     const pendingMediaTap = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const likeBurstTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const captionNeedsExpansion =
         post.caption !== null &&
         (post.caption.length > 160 || post.caption.split(/\r?\n/).length > 3);
@@ -46,8 +48,24 @@ export default function PostCard({
             if (pendingMediaTap.current !== null) {
                 clearTimeout(pendingMediaTap.current);
             }
+
+            if (likeBurstTimer.current !== null) {
+                clearTimeout(likeBurstTimer.current);
+            }
         };
     }, []);
+
+    function showLikeBurst() {
+        if (likeBurstTimer.current !== null) {
+            clearTimeout(likeBurstTimer.current);
+        }
+
+        setLikeBurst((current) => current + 1);
+        likeBurstTimer.current = setTimeout(() => {
+            setLikeBurst(0);
+            likeBurstTimer.current = null;
+        }, 700);
+    }
 
     function handleMediaClick(event: MouseEvent<HTMLButtonElement>) {
         if (!isMobile || event.detail === 0) {
@@ -67,6 +85,7 @@ export default function PostCard({
 
         clearTimeout(pendingMediaTap.current);
         pendingMediaTap.current = null;
+        showLikeBurst();
 
         if (!liked) {
             toggle();
@@ -116,7 +135,7 @@ export default function PostCard({
                 onClick={handleMediaClick}
                 className="block w-full cursor-pointer text-left"
             >
-                <div className="aspect-square w-full max-w-full overflow-hidden bg-muted">
+                <div className="relative aspect-square w-full max-w-full overflow-hidden bg-muted">
                     <PostImage
                         src={post.image_url}
                         alt={
@@ -126,6 +145,19 @@ export default function PostCard({
                         loading="lazy"
                         className="size-full object-cover"
                     />
+                    {likeBurst > 0 && (
+                        <span
+                            key={likeBurst}
+                            data-testid="like-burst"
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                        >
+                            <Heart
+                                className="size-24 scale-100 fill-white text-white opacity-100 drop-shadow-lg motion-safe:animate-like-burst"
+                                strokeWidth={1.5}
+                            />
+                        </span>
+                    )}
                 </div>
             </button>
 
@@ -182,13 +214,15 @@ export default function PostCard({
                             </span>{' '}
                             {post.caption}
                         </button>
-                        {captionNeedsExpansion && !captionExpanded && (
+                        {captionNeedsExpansion && (
                             <button
                                 type="button"
-                                onClick={() => setCaptionExpanded(true)}
+                                onClick={() =>
+                                    setCaptionExpanded((expanded) => !expanded)
+                                }
                                 className="mt-1 cursor-pointer text-sm text-muted-foreground hover:text-foreground"
                             >
-                                see more
+                                {captionExpanded ? 'see less' : 'see more'}
                             </button>
                         )}
                     </>
