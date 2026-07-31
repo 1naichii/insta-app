@@ -4,7 +4,9 @@ namespace Tests\Feature\Auth;
 
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Unlimited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -106,6 +108,25 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertTooManyRequests();
+    }
+
+    public function test_users_are_not_rate_limited_in_the_e2e_environment()
+    {
+        $environment = app()->environment();
+        $limiter = RateLimiter::limiter('login');
+        $this->assertNotNull($limiter);
+
+        app()->detectEnvironment(fn () => 'e2e');
+
+        try {
+            $limit = $limiter(Request::create('/login', 'POST', [
+                'email' => 'demo@instaapp.test',
+            ]));
+
+            $this->assertInstanceOf(Unlimited::class, $limit);
+        } finally {
+            app()->detectEnvironment(fn () => $environment);
+        }
     }
 
     #[DataProvider('protectedPageRoutes')]
